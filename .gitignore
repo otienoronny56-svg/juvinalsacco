@@ -1,7 +1,6 @@
 # Environment variables
 .env
 .env.local
-config.js
 
 # Temporary files
 temp.js
