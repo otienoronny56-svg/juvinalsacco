@@ -1163,7 +1163,6 @@
                     id: user.id,
                     full_name: (user.user_metadata && user.user_metadata.first_name) ? (user.user_metadata.first_name + ' ' + (user.user_metadata.last_name || '')) : 'New Member',
                     phone: (user.user_metadata && user.user_metadata.phone) ? user.user_metadata.phone : '',
-                    email: user.email, // Fix: Ensure email is saved if profile is created via dashboard
                     savings_balance: 0,
                     country: (user.user_metadata && user.user_metadata.country) ? user.user_metadata.country : 'Kenya',
                     county: (user.user_metadata && user.user_metadata.county) ? user.user_metadata.county : null,
