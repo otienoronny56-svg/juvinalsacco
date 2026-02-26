@@ -19,22 +19,6 @@
     <script>
         // Prevents Flash of Unstyled Content (FOUC) for dark mode
         if (
-            localStorage.getItem('theme') === 'dark' ||
-            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-        ) {
-            document.documentElement.classList.add('dark');
-        }
-    </script>
-    <style>
-        * {
-            -webkit-filter: grayscale(0%);
-        }
-
-        .cards-container {
-            scroll-snap-type: x mandatory;
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            display: flex !important;
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
@@ -907,7 +891,7 @@
                     <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Loan Amount
                         (KES)</label>
                     <input type="number" id="loan-amount" placeholder="0" oninput="checkGuarantorRequirement()"
-                        class="w-full bg-white border-2 border-gray-100 rounded-xl p-4 text-xl font-bold outline-none focus:border-indigo-500 transition-colors text-center text-gray-900">
+                        class="w-full bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl p-4 text-xl font-bold outline-none focus:border-indigo-500 transition-colors text-center text-gray-900 dark:text-gray-100">
                 </div>
 
                 <div id="guarantor-section"
@@ -915,11 +899,11 @@
                     <p class="text-[10px] font-bold text-yellow-700 uppercase">⚠️ Guarantor Required</p>
 
                     <div>
-                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Search
+                        <label class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Search
                             Guarantor Member</label>
                         <input type="text" id="guarantor-search" onkeyup="searchGuarantorMembers()"
                             placeholder="Type member name or ID..."
-                            class="w-full bg-white border-2 border-yellow-200 rounded-lg p-3 text-sm outline-none focus:border-yellow-500 transition-colors text-gray-900">
+                            class="w-full bg-white dark:bg-gray-700 border-2 border-yellow-200 dark:border-yellow-700/50 rounded-lg p-3 text-sm outline-none focus:border-yellow-500 transition-colors text-gray-900 dark:text-gray-100">
                     </div>
 
                     <div id="guarantor-search-results" class="max-h-40 overflow-y-auto space-y-2 hidden">

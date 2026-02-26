@@ -234,7 +234,23 @@ function doAction(type) {
 }
 
 // 7. NAVIGATION
-function switchView(view) {
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.view) {
+        switchView(event.state.view, false);
+    } else {
+        switchView('dashboard', false);
+    }
+});
+
+function switchView(view, pushState = true) {
+    if (pushState) {
+        if (view === 'dashboard') {
+            history.pushState({ view: 'dashboard' }, '', window.location.pathname);
+        } else {
+            history.pushState({ view: view }, '', `#${view}`);
+        }
+    }
+
     const dashboardView = document.getElementById('dashboard-view');
     const loansView = document.getElementById('loans-view');
     const guarantorView = document.getElementById('guarantor-view');
@@ -802,9 +818,9 @@ async function loadGuarantorView() {
     }
 
     container.innerHTML = requests.map(req => `
-                <div class="bg-white p-4 rounded-xl border border-yellow-200">
-                    <p class="text-xs font-bold text-gray-700 mb-2">${req.profiles?.full_name || 'Member'}</p>
-                    <p class="text-sm font-bold text-gray-900 mb-3">KES ${req.amount_guaranteed.toLocaleString()}</p>
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-yellow-200 dark:border-yellow-700/50 shadow-sm">
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">${req.profiles?.full_name || 'Member'}</p>
+                    <p class="text-sm font-bold text-gray-900 dark:text-gray-100 mb-3">KES ${req.amount_guaranteed.toLocaleString()}</p>
                     <div class="flex gap-2">
                         <button onclick="acceptGuarantee('${req.id}', ${req.amount_guaranteed})" class="flex-1 bg-green-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-green-700 transition-colors">Accept</button>
                         <button onclick="declineGuarantee('${req.id}')" class="flex-1 bg-red-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-red-700 transition-colors">Decline</button>
@@ -1665,3 +1681,12 @@ function contactSupport() {
     const message = encodeURIComponent(`Hello Support, I am ${name}. I need assistance with Juvinal Pay.`);
     window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
 }
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const hash = window.location.hash.replace('#', '');
+    if (['loans', 'guarantor', 'history'].includes(hash)) {
+        setTimeout(() => switchView(hash, false), 100);
+    }
+});
+
