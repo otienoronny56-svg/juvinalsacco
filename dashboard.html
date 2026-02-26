@@ -1,0 +1,2774 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juvinal Pay</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <script>
+        // Prevents Flash of Unstyled Content (FOUC) for dark mode
+        if (
+            localStorage.getItem('theme') === 'dark' ||
+            (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        * {
+            -webkit-filter: grayscale(0%);
+        }
+
+        .cards-container {
+            scroll-snap-type: x mandatory;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .card {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+        }
+
+        .cards-container::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .cards-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .cards-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 2px;
+        }
+
+        /* Hide scrollbar for modern look */
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-item.active,
+        .dark .nav-item.active {
+            color: #4f46e5;
+            /* indigo-600 */
+        }
+
+        .blur-balance {
+            filter: blur(8px);
+            user-select: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Mobile App Native Feel */
+        body {
+            overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-x pan-y;
+        }
+
+        input,
+        textarea,
+        select {
+            user-select: auto;
+        }
+
+        .pb-safe {
+            padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        }
+
+        .pt-safe {
+            padding-top: calc(1rem + env(safe-area-inset-top, 0px));
+        }
+
+        /* Cultural Background Theme Classes */
+        .cultural-bg-dashboard {
+            background-color: #f3f4f6;
+            background-image: url('dashboard-bg.svg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: multiply;
+            /* Subtly darkens the white background */
+        }
+
+        .dark .cultural-bg-dashboard {
+            background-color: #111827;
+            background-blend-mode: overlay;
+        }
+
+        .cultural-bg-card {
+            background-image: linear-gradient(to bottom right, rgba(79, 70, 229, 0.95), rgba(67, 56, 202, 0.98)), url('card-bg.svg');
+            background-size: cover;
+            background-position: right center;
+            background-blend-mode: overlay;
+        }
+
+        .cultural-bg-modal {
+            background-color: #ffffff;
+            background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98)), url('modal-bg.svg');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: normal;
+        }
+
+        .dark .cultural-bg-modal {
+            background-color: #1f2937;
+            background-image: linear-gradient(to bottom, rgba(31, 41, 55, 0.95), rgba(31, 41, 55, 0.98)), url('modal-bg.svg');
+            background-blend-mode: normal;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 pb-24 pb-safe cultural-bg-dashboard">
+
+    <!-- HEADER -->
+    <header
+        class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 z-40 pt-safe">
+        <div class="max-w-md mx-auto px-4 py-2 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img id="header-avatar" onclick="openSettings()" src="https://ui-avatars.com/api/?name=User"
+                    class="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-600 cursor-pointer">
+                <div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Hello, <span id="header-firstname"
+                            class="font-bold text-gray-900 dark:text-gray-100">Member</span></p>
+                    <p class="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold" id="member-id">...</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleNotifications()"
+                    class="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <i class="ri-notification-3-line text-xl text-gray-600 dark:text-gray-300"></i>
+                    <span id="notif-badge" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                </button>
+                <button onclick="openSettings()"
+                    class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <i class="ri-settings-3-line text-xl text-gray-600 dark:text-gray-300"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NOTIFICATIONS MODAL -->
+    <div id="notifications-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end">
+        <div class="bg-white dark:bg-gray-800 w-full rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto cultural-bg-modal">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Guarantor Requests</h2>
+                <button onclick="toggleNotifications()"
+                    class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="ri-close-line text-2xl"></i>
+                </button>
+            </div>
+            <div id="notifications-list" class="space-y-3">
+                <div class="text-center text-gray-500 py-6">No guarantor requests</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-start justify-center p-4 pt-20">
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto cultural-bg-modal">
+
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Member Profile</h2>
+                <button onclick="closeSettings()"
+                    class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="ri-close-line text-2xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+
+                <!-- 1. Full Name (Read Only) -->
+                <div class="text-center">
+                    <h3 id="settings-full-name" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Loading...
+                    </h3>
+                    <p id="settings-member-id" class="text-sm text-gray-500 dark:text-gray-400 font-mono">ID: ...</p>
+                </div>
+
+                <!-- 2. Profile Photo Upload -->
+                <div class="flex justify-center">
+                    <div class="relative group cursor-pointer"
+                        onclick="document.getElementById('avatar-upload').click()">
+                        <img id="settings-avatar-img" src="https://ui-avatars.com/api/?name=User&background=random"
+                            class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-lg group-hover:opacity-75 transition-opacity">
+                        <div
+                            class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="ri-camera-line text-white text-3xl drop-shadow-lg"></i>
+                        </div>
+                        <div
+                            class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow-md border-2 border-white">
+                            <i class="ri-pencil-line"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="avatar-upload" class="hidden" accept="image/*"
+                        onchange="uploadAvatar(event)">
+                </div>
+
+                <!-- 3-6. Details List -->
+                <div
+                    class="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-5 space-y-4 border border-gray-100 dark:border-gray-700">
+
+                    <!-- Edit button -->
+                    <div class="text-right -mt-2 -mr-2">
+                        <button id="edit-profile-btn" onclick="toggleProfileEdit(true)"
+                            class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">Edit</button>
+                        <div id="edit-profile-actions" class="hidden space-x-2">
+                            <button onclick="toggleProfileEdit(false)"
+                                class="text-xs font-bold text-gray-500 hover:underline">Cancel</button>
+                            <button onclick="saveProfileChanges()"
+                                class="text-xs font-bold text-green-600 dark:text-green-400 hover:underline">Save</button>
+                        </div>
+                    </div>
+
+                    <!-- Joining Date -->
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-300 shadow-sm">
+                            <i class="ri-calendar-check-line text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                Joined Date</p>
+                            <p id="settings-joined-date" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                ...</p>
+                        </div>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/50 flex items-center justify-center text-purple-600 dark:text-purple-300 shadow-sm">
+                            <i class="ri-mail-send-line text-lg"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                Email Address</p>
+                            <p id="settings-email-text"
+                                class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">...</p>
+                        </div>
+                    </div>
+
+                    <!-- Phone -->
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-600 dark:text-green-300 shadow-sm">
+                            <i class="ri-smartphone-line text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                Phone Number</p>
+                            <p id="settings-phone-text" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                ...</p>
+                            <input type="tel" id="edit-phone" placeholder="07..."
+                                class="hidden w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm text-gray-900 dark:text-gray-100">
+                        </div>
+                    </div>
+
+                    <!-- National ID -->
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-900/50 flex items-center justify-center text-gray-600 dark:text-gray-300 shadow-sm">
+                            <i class="ri-id-card-line text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                National ID</p>
+                            <p id="settings-id-number" class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                ...</p>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900/50 flex items-center justify-center text-orange-600 dark:text-orange-300 shadow-sm">
+                            <i class="ri-map-pin-2-line text-lg"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                                Location</p>
+                            <p id="settings-location-text"
+                                class="text-sm font-semibold text-gray-900 dark:text-gray-100">...</p>
+                            <select id="edit-county"
+                                class="hidden w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md px-2 py-1 text-sm text-gray-900 dark:text-gray-100">
+                                <option value="">Select County</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents Upload Section (Collapsible or below) -->
+                <div class="border-t dark:border-gray-700 pt-4">
+                    <button onclick="document.getElementById('kyc-section').classList.toggle('hidden')"
+                        class="flex items-center justify-between w-full text-left mb-2">
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">📄 KYC Documents</h3>
+                        <i class="ri-arrow-down-s-line text-gray-500 dark:text-gray-400"></i>
+                    </button>
+
+                    <div id="kyc-section" class="hidden space-y-3 mt-2">
+                        <!-- Document Type Select -->
+                        <select id="doc-upload-type"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                            <option value="ID">National ID Card</option>
+                            <option value="Passport">Passport</option>
+                            <option value="Driving License">Driving License</option>
+                            <option value="Bank Statement">Bank Statement</option>
+                            <option value="Other">Other Document</option>
+                        </select>
+
+                        <!-- File Upload -->
+                        <div
+                            class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center cursor-pointer hover:border-indigo-400 transition-colors">
+                            <input type="file" id="doc-file-input" class="hidden" accept="image/*,application/pdf" />
+                            <div onclick="document.getElementById('doc-file-input').click()" class="text-center">
+                                <p class="text-sm text-gray-600 dark:text-gray-300 font-medium">Click to upload</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, PDF (max 5MB)</p>
+                            </div>
+                        </div>
+
+                        <button onclick="uploadDocument(event)"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold text-sm transition-colors">
+                            Upload Document
+                        </button>
+
+                        <!-- Uploaded Documents List -->
+                        <div id="user-docs-list" class="space-y-2 mt-4">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Loading documents...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms & Policy -->
+                <div class="border-t dark:border-gray-700 pt-4">
+                    <button onclick="openTermsModal()"
+                        class="flex items-center justify-between w-full text-left mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                                <i class="ri-file-list-3-line"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Terms & Policy</h3>
+                        </div>
+                        <i class="ri-arrow-right-s-line text-gray-500 dark:text-gray-400"></i>
+                    </button>
+                </div>
+
+                <!-- Contact Support -->
+                <div class="border-t dark:border-gray-700 pt-4">
+                    <button onclick="contactSupport()"
+                        class="flex items-center justify-between w-full text-left mb-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400">
+                                <i class="ri-whatsapp-line"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">Contact Support</h3>
+                        </div>
+                        <i class="ri-arrow-right-s-line text-gray-500 dark:text-gray-400"></i>
+                    </button>
+                </div>
+
+                <!-- Change Password -->
+                <div class="border-t dark:border-gray-700 pt-4">
+                    <button onclick="document.getElementById('password-section').classList.toggle('hidden')"
+                        class="flex items-center justify-between w-full text-left mb-2">
+                        <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100">🔑 Change Password</h3>
+                        <i class="ri-arrow-down-s-line text-gray-500 dark:text-gray-400"></i>
+                    </button>
+
+                    <div id="password-section" class="hidden space-y-3 mt-2">
+                        <input type="password" id="new-password" placeholder="New Password (min 6 chars)"
+                            class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 outline-none">
+                        <input type="password" id="confirm-new-password" placeholder="Confirm New Password"
+                            class="w-full px-3 py-2 rounded-lg border dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 outline-none">
+                        <button onclick="handleChangePassword(event)"
+                            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-bold text-sm transition-colors">
+                            Update Password
+                        </button>
+                        <p id="password-change-msg" class="text-center text-xs font-medium h-4"></p>
+                    </div>
+                </div>
+
+                <!-- Dark Mode -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100">Dark Mode</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Switch to a darker theme</p>
+                    </div>
+                    <button onclick="toggleDarkMode()" id="dark-mode-toggle"
+                        class="w-12 h-7 bg-gray-300 dark:bg-gray-600 rounded-full relative transition-colors">
+                        <span id="dark-mode-indicator"
+                            class="w-6 h-6 bg-white rounded-full absolute left-0.5 top-0.5 transition-transform"></span>
+                    </button>
+                </div>
+
+                <!-- Privacy Mode -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                    <div>
+                        <p class="font-semibold text-gray-900 dark:text-gray-100">Privacy Mode</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Hide balance amounts</p>
+                    </div>
+                    <button onclick="togglePrivacyMode()" id="privacy-toggle"
+                        class="w-12 h-7 bg-gray-300 dark:bg-gray-600 rounded-full relative transition-colors">
+                        <span id="privacy-indicator"
+                            class="w-6 h-6 bg-white rounded-full absolute left-0.5 top-0.5 transition-transform"></span>
+                    </button>
+                </div>
+
+                <!-- Log Out -->
+                <button onclick="logout()"
+                    class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold transition-colors">
+                    Log Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TERMS & POLICY MODAL -->
+    <div id="terms-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl p-6 max-h-[85vh] overflow-y-auto relative shadow-2xl animate-slide-up cultural-bg-modal">
+            <button onclick="closeTermsModal()"
+                class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors">
+                <i class="ri-close-line text-2xl"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <img src="juvinal.png" class="w-16 mx-auto mb-3 drop-shadow-md">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Terms & Policy</h2>
+                <p class="text-xs text-green-600 font-bold italic">Together we Grow</p>
+            </div>
+
+            <div class="space-y-4 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+                    <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-2">1. Membership Agreement</h3>
+                    <p>By registering with Juvinal Pay, you agree to become a member of the Sacco and abide by its
+                        by-laws. Membership is subject to approval by the administration.</p>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+                    <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-2">2. Privacy Policy</h3>
+                    <p>We value your privacy. Your personal information, including ID and phone number, is collected
+                        solely for identification, transaction processing, and legal compliance. We do not share your
+                        data with third parties without consent.</p>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl">
+                    <h3 class="font-bold text-gray-900 dark:text-gray-100 mb-2">3. Financial Transactions</h3>
+                    <p>All deposits, withdrawals, and loan requests are processed securely. You are responsible for
+                        ensuring the accuracy of your transaction details. The Sacco reserves the right to verify all
+                        transactions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile App CSS Block for Safe Area -->
+    <style>
+        body {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* The pb-safe class is typically configured in tailwind.config.js for utility-first approach */
+        /* If not using Tailwind's pb-safe, you might define it here: */
+        /* .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom);
+        } */
+    </style>
+
+    <!-- VIEWS -->
+    <main id="dashboard-view" class="max-w-md mx-auto pt-16 px-4 pb-20 fade-in">
+        <!-- SWIPABLE CARDS -->
+        <div
+            class="cards-container hide-scrollbar flex flex-nowrap gap-4 mb-4 snap-x snap-mandatory overflow-x-auto px-1 w-full">
+
+            <!-- SAVINGS CARD -->
+            <div class="card flex-shrink-0 w-[90%] cultural-bg-card rounded-3xl p-5 text-white shadow-lg ml-1">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <p class="text-indigo-200 text-xs font-semibold uppercase tracking-wide mb-1">Total Savings</p>
+                        <h2 id="bal-savings" class="balance-amount text-3xl font-bold">0</h2>
+                    </div>
+                    <button onclick="toggleBalanceVisibility()"
+                        class="p-2 hover:bg-white/20 rounded-lg transition-colors">
+                        <i id="privacy-icon" class="ri-eye-line text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-indigo-200 text-sm">KES</p>
+            </div>
+
+            <!-- NET SAVINGS CARD -->
+            <div class="card flex-shrink-0 w-[90%] cultural-bg-card rounded-3xl p-5 text-white shadow-lg">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <p class="text-teal-200 text-xs font-semibold uppercase tracking-wide mb-1">Net Savings</p>
+                        <h2 id="bal-net-savings" class="balance-amount text-3xl font-bold">0</h2>
+                    </div>
+                    <div class="text-teal-200 text-2xl opacity-50"><i class="ri-wallet-3-line"></i></div>
+                </div>
+                <p class="text-teal-200 text-sm">KES</p>
+            </div>
+
+            <!-- SHARES CARD -->
+            <div class="card flex-shrink-0 w-[90%] cultural-bg-card rounded-3xl p-5 text-white shadow-lg">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <p class="text-green-200 text-xs font-semibold uppercase tracking-wide mb-1">Shares Capital</p>
+                        <h2 id="bal-shares" class="balance-amount text-3xl font-bold">0</h2>
+                    </div>
+                    <div class="text-green-200 text-2xl opacity-50"><i class="ri-pie-chart-line"></i></div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <p class="text-green-200 text-sm">KES</p>
+                    <button onclick="downloadShareCertificate()"
+                        class="bg-white/20 hover:bg-white/30 text-white text-[10px] px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors backdrop-blur-sm">
+                        <i class="ri-file-paper-2-line"></i> Certificate
+                    </button>
+                </div>
+            </div>
+
+            <!-- LOCKED GUARANTEES CARD -->
+            <div class="card flex-shrink-0 w-[90%] cultural-bg-card rounded-3xl p-5 text-white shadow-lg"
+                id="guarantees-card">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <p class="text-orange-200 text-xs font-semibold uppercase tracking-wide mb-1">Locked as
+                            Guarantor</p>
+                        <h2 id="locked-guarantees" class="balance-amount text-3xl font-bold">0</h2>
+                    </div>
+                    <div class="text-orange-200 text-2xl opacity-50"><i class="ri-lock-line"></i></div>
+                </div>
+                <p class="text-orange-200 text-sm">KES</p>
+            </div>
+
+            <!-- LOAN LIMIT CARD -->
+            <div class="card flex-shrink-0 w-[90%] cultural-bg-card rounded-3xl p-5 text-white shadow-lg mr-1">
+                <div class="flex justify-between items-start mb-8">
+                    <div>
+                        <p class="text-purple-200 text-xs font-semibold uppercase tracking-wide mb-1">Loan Limit</p>
+                        <h2 id="loan-limit" class="balance-amount text-3xl font-bold">0</h2>
+                    </div>
+                    <div class="text-purple-200 text-2xl opacity-50"><i class="ri-hand-coin-line"></i></div>
+                </div>
+                <p class="text-purple-200 text-sm">KES</p>
+            </div>
+        </div>
+
+        <!-- SCROLL INDICATOR -->
+        <div class="flex justify-center gap-1 mb-6">
+            <div id="dot-0" class="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 transition-all"></div>
+            <div id="dot-1" class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all"></div>
+            <div id="dot-2" class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all"></div>
+            <div id="dot-3" class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all"></div>
+            <div id="dot-4" class="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all"></div>
+        </div>
+
+        <!-- QUICK ACTIONS -->
+        <div class="grid grid-cols-4 gap-3 mb-4">
+            <button onclick="doAction('deposit')"
+                class="flex flex-col items-center gap-1.5 p-2 bg-white dark:bg-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center text-green-600 text-lg">
+                    <i class="ri-add-circle-fill"></i>
+                </div>
+                <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center">Deposit</span>
+            </button>
+
+            <button onclick="doAction('withdraw')"
+                class="flex flex-col items-center gap-1.5 p-2 bg-white dark:bg-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                <div
+                    class="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center text-orange-600 text-lg">
+                    <i class="ri-bank-card-fill"></i>
+                </div>
+                <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center">Withdraw</span>
+            </button>
+
+            <button onclick="doAction('loan')"
+                class="flex flex-col items-center gap-1.5 p-2 bg-white dark:bg-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                <div
+                    class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600 text-lg">
+                    <i class="ri-hand-coin-fill"></i>
+                </div>
+                <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center">Loan</span>
+            </button>
+
+            <button onclick="doAction('transfer')"
+                class="flex flex-col items-center gap-1.5 p-2 bg-white dark:bg-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm">
+                <div
+                    class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600 text-lg">
+                    <i class="ri-exchange-funds-line"></i>
+                </div>
+                <span class="text-[10px] font-semibold text-gray-700 dark:text-gray-300 text-center">Transfer</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- RECENT TRANSACTIONS MODAL -->
+    <div id="recent-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end">
+        <div class="bg-white dark:bg-gray-800 w-full rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto cultural-bg-modal">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-gray-100">Recent Transactions</h2>
+                <button onclick="closeRecentTransactions()"
+                    class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+                    <i class="ri-close-line text-2xl"></i>
+                </button>
+            </div>
+            <div id="full-tx-list" class="space-y-3">
+                <div class="text-center text-gray-500 py-6">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-40 pb-safe">
+        <div class="max-w-md mx-auto flex items-center justify-around">
+            <button onclick="switchView('dashboard')"
+                class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-gray-600 dark:text-gray-300 active border-t-4 border-indigo-600 dark:border-indigo-400">
+                <i class="ri-home-6-line text-2xl"></i>
+                <span class="text-[10px] font-semibold mt-0.5">Home</span>
+            </button>
+            <button onclick="switchView('loans')"
+                class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-gray-600 dark:text-gray-400 border-t-4 border-transparent hover:text-gray-900 dark:hover:text-gray-100">
+                <i class="ri-hand-coin-line text-2xl"></i>
+                <span class="text-[10px] font-semibold mt-0.5">Loans</span>
+            </button>
+            <button onclick="switchView('guarantor')"
+                class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-gray-600 dark:text-gray-400 border-t-4 border-transparent hover:text-gray-900 dark:hover:text-gray-100 relative">
+                <i class="ri-shield-check-line text-2xl"></i>
+                <span class="text-[10px] font-semibold mt-0.5">Guarantor</span>
+                <span id="nav-guarantor-badge"
+                    class="absolute top-1 right-1/4 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+            </button>
+            <button onclick="switchView('history')"
+                class="nav-item flex-1 flex flex-col items-center justify-center py-2 text-gray-600 dark:text-gray-400 border-t-4 border-transparent hover:text-gray-900 dark:hover:text-gray-100">
+                <i class="ri-history-line text-2xl"></i>
+                <span class="text-[10px] font-semibold mt-0.5">History</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- HIDDEN VIEWS (will implement these sections) -->
+    <div id="loans-view" class="hidden max-w-md mx-auto pt-24 px-4 pb-24 fade-in">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">My Loans</h2>
+        <div class="h-[70vh] overflow-y-auto pr-1 pb-4 hide-scrollbar">
+            <div id="loans-summary-container"></div>
+            <div id="loans-list" class="space-y-3">
+                <div class="text-center text-gray-500 py-6">No loans</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="guarantor-view" class="hidden max-w-md mx-auto pt-24 px-4 pb-24 fade-in">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Guarantor Requests</h2>
+        <div id="guarantor-list" class="space-y-3">
+            <div class="text-center text-gray-500 py-6">No requests</div>
+        </div>
+    </div>
+
+    <div id="history-view" class="hidden max-w-md mx-auto pt-24 px-4 pb-24 fade-in">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Transaction History</h2>
+
+        <!-- Search and Filter -->
+        <div class="flex gap-2 mb-4">
+            <div class="relative flex-1">
+                <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="history-search" onkeyup="filterHistory()" placeholder="Search amount, date..."
+                    class="w-full pl-9 pr-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:border-indigo-500 dark:text-gray-100">
+            </div>
+            <select id="history-filter" onchange="filterHistory()"
+                class="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm outline-none focus:border-indigo-500 dark:text-gray-100">
+                <option value="all">All</option>
+                <option value="deposit">Deposits</option>
+                <option value="withdrawal">Withdrawals</option>
+                <option value="loan_disbursement">Loans</option>
+                <option value="repayment">Repayments</option>
+                <option value="share_transfer">Share Transfers</option>
+            </select>
+            <button onclick="exportHistoryToCSV()"
+                class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm transition-colors"
+                title="Export to CSV">
+                <i class="ri-download-line"></i>
+            </button>
+        </div>
+
+        <div
+            class="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700 h-[60vh] overflow-y-auto">
+            <div id="history-list" class="space-y-3 pr-1">
+                <div class="text-center text-gray-500 py-6">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INCLUDE ALL MODALS FROM ORIGINAL (deposit, withdraw, loan) -->
+    <div id="deposit-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center p-4 pt-20">
+        <div onclick="closeModal('deposit-modal')"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl overflow-y-auto max-h-[85vh] cultural-bg-modal">
+            <div class="text-center mb-6">
+                <div
+                    class="h-14 w-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <i class="ri-smartphone-line text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-gray-100">M-Pesa Deposit</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1">Instant Top-Up to Savings</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Amount
+                        (KES)</label>
+                    <input type="number" id="dep-amount" placeholder="Min 10"
+                        class="w-full bg-gray-50 border-2 border-gray-100 rounded-xl p-4 text-xl font-bold outline-none focus:border-green-500 transition-colors text-center text-gray-900">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">M-Pesa
+                        Number</label>
+                    <div class="relative">
+                        <span
+                            class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 font-bold text-sm">+254</span>
+                        <input type="tel" id="dep-phone" placeholder="7XX XXX XXX"
+                            class="w-full bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl p-3 pl-14 font-mono font-bold text-gray-600 dark:text-gray-300 outline-none focus:border-green-500 transition-colors">
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="executeDeposit()" id="dep-btn"
+                class="w-full bg-green-600 hover:bg-green-700 active:scale-95 text-white py-4 rounded-xl font-bold shadow-lg shadow-green-100 mt-6 transition-all flex items-center justify-center gap-2">
+                <span>Pay Now</span>
+                <i class="ri-arrow-right-line"></i>
+            </button>
+
+            <p id="dep-msg" class="text-center text-[10px] font-bold mt-4 text-gray-400 dark:text-gray-500 h-4"></p>
+
+            <button onclick="closeModal('deposit-modal')"
+                class="absolute top-6 right-6 p-2 text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors">
+                <i class="ri-close-line text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="withdraw-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center p-4 pt-20">
+        <div onclick="closeModal('withdraw-modal')"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl overflow-y-auto max-h-[85vh] cultural-bg-modal">
+            <div class="text-center mb-6">
+                <div
+                    class="h-14 w-14 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <i class="ri-bank-card-line text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-gray-100">Withdraw Funds</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1">Transfer to M-Pesa</p>
+            </div>
+
+            <div class="space-y-4">
+                <div
+                    class="bg-orange-50 dark:bg-orange-900/30 p-3 rounded-xl border border-orange-100 dark:border-orange-800/50 flex justify-between items-center">
+                    <span class="text-[10px] font-bold text-orange-400 uppercase tracking-wider">Available</span>
+                    <span class="text-sm font-black text-orange-600 dark:text-orange-300" id="avail-bal">KES 0</span>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Amount
+                        (KES)</label>
+                    <input type="number" id="wd-amount" placeholder="0"
+                        class="w-full bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl p-4 text-xl font-bold outline-none focus:border-orange-500 transition-colors text-center text-gray-900 dark:text-gray-100">
+                </div>
+            </div>
+
+            <button onclick="executeWithdraw()" id="wd-btn"
+                class="w-full bg-gray-900 hover:bg-black active:scale-95 text-white py-4 rounded-xl font-bold shadow-lg mt-6 transition-all flex items-center justify-center gap-2">
+                <span>Confirm Withdrawal</span>
+                <i class="ri-check-line"></i>
+            </button>
+
+            <p id="wd-msg" class="text-center text-[10px] font-bold mt-4 text-gray-400 dark:text-gray-500 h-4"></p>
+
+            <button onclick="closeModal('withdraw-modal')"
+                class="absolute top-6 right-6 p-2 text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors">
+                <i class="ri-close-line text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="transfer-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center p-4 pt-20">
+        <div onclick="closeModal('transfer-modal')"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl overflow-y-auto max-h-[85vh] cultural-bg-modal">
+            <div class="text-center mb-6">
+                <div
+                    class="h-14 w-14 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <i class="ri-exchange-funds-line text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-gray-100">Buy Shares</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1">Transfer from Savings to Share
+                    Capital</p>
+            </div>
+
+            <div class="space-y-4">
+                <div
+                    class="bg-purple-50 dark:bg-purple-900/30 p-3 rounded-xl border border-purple-100 dark:border-purple-800/50 text-center">
+                    <p class="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Available Savings</p>
+                    <span class="text-lg font-black text-purple-600 dark:text-purple-300" id="transfer-avail-bal">KES
+                        0</span>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Amount to Transfer
+                        (KES)</label>
+                    <input type="number" id="transfer-amount" placeholder="0"
+                        class="w-full bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl p-4 text-xl font-bold outline-none focus:border-purple-500 transition-colors text-center text-gray-900 dark:text-gray-100">
+                    <p class="text-[10px] text-red-500 mt-2 text-center">Note: Share Capital cannot be withdrawn.</p>
+                </div>
+            </div>
+
+            <button onclick="executeTransfer()" id="transfer-btn"
+                class="w-full bg-purple-600 hover:bg-purple-700 active:scale-95 text-white py-4 rounded-xl font-bold shadow-lg mt-6 transition-all flex items-center justify-center gap-2">
+                <span>Confirm Transfer</span>
+                <i class="ri-check-line"></i>
+            </button>
+
+            <button onclick="closeModal('transfer-modal')"
+                class="absolute top-6 right-6 p-2 text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors"><i
+                    class="ri-close-line text-xl"></i></button>
+        </div>
+    </div>
+
+    <div id="loan-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center p-4 pt-20">
+        <div onclick="closeModal('loan-modal')"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl overflow-y-auto max-h-[85vh] cultural-bg-modal">
+            <div class="text-center mb-6">
+                <div
+                    class="h-14 w-14 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <i class="ri-hand-coin-line text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-gray-100">Apply for Loan</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1">Build your credit journey</p>
+            </div>
+
+            <div id="loan-eligibility-check" class="space-y-4">
+                <div class="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500 p-4 rounded-lg">
+                    <p class="text-[10px] font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wider mb-3">
+                        Eligibility Status</p>
+                    <div id="eligibility-content" class="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                        <p class="flex items-center gap-2"><i class="ri-loader-4-line animate-spin text-blue-500"></i>
+                            Checking...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loan-form" class="hidden space-y-4 mt-6">
+                <div
+                    class="bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
+                    <p class="text-[10px] font-bold text-indigo-400 uppercase">Max Loan Allowed</p>
+                    <p class="text-lg font-bold text-indigo-600" id="max-loan">KES 0</p>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Loan Amount
+                        (KES)</label>
+                    <input type="number" id="loan-amount" placeholder="0" oninput="checkGuarantorRequirement()"
+                        class="w-full bg-white border-2 border-gray-100 rounded-xl p-4 text-xl font-bold outline-none focus:border-indigo-500 transition-colors text-center text-gray-900">
+                </div>
+
+                <div id="guarantor-section"
+                    class="hidden space-y-3 p-3 bg-yellow-50 dark:bg-yellow-900/30 border-2 border-yellow-200 dark:border-yellow-800/50 rounded-xl">
+                    <p class="text-[10px] font-bold text-yellow-700 uppercase">⚠️ Guarantor Required</p>
+
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 uppercase tracking-wider ml-1">Search
+                            Guarantor Member</label>
+                        <input type="text" id="guarantor-search" onkeyup="searchGuarantorMembers()"
+                            placeholder="Type member name or ID..."
+                            class="w-full bg-white border-2 border-yellow-200 rounded-lg p-3 text-sm outline-none focus:border-yellow-500 transition-colors text-gray-900">
+                    </div>
+
+                    <div id="guarantor-search-results" class="max-h-40 overflow-y-auto space-y-2 hidden">
+                        <div class="text-xs text-gray-500">Searching...</div>
+                    </div>
+
+                    <!-- List of Selected Guarantors -->
+                    <div id="selected-guarantors-list" class="space-y-2 hidden"></div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Disbursement
+                        Method</label>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <label
+                            class="flex items-center gap-2 p-3 border-2 border-gray-100 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <input type="radio" name="disburse" value="mpesa" checked class="w-4 h-4 text-indigo-600">
+                            <span class="text-sm font-bold">M-Pesa</span>
+                        </label>
+                        <label
+                            class="flex items-center gap-2 p-3 border-2 border-gray-100 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <input type="radio" name="disburse" value="savings" class="w-4 h-4 text-indigo-600">
+                            <span class="text-sm font-bold">Savings</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="openLoanReview()" id="loan-btn"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white py-4 rounded-xl font-bold shadow-lg mt-6 transition-all hidden flex items-center justify-center gap-2">
+                <span>Review Loan Details</span>
+                <i class="ri-arrow-right-line"></i>
+            </button>
+
+            <p id="loan-msg" class="text-center text-[10px] font-bold mt-4 text-gray-400 dark:text-gray-500 h-4"></p>
+
+            <button onclick="closeModal('loan-modal')"
+                class="absolute top-6 right-6 p-2 text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors">
+                <i class="ri-close-line text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- LOAN REVIEW MODAL -->
+    <div id="loan-review-modal" class="fixed inset-0 z-[60] hidden flex items-start justify-center p-4 pt-10">
+        <div onclick="closeModal('loan-review-modal')"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl relative z-10 shadow-2xl overflow-hidden flex flex-col max-h-[90vh] cultural-bg-modal">
+
+            <!-- Header -->
+            <div class="bg-teal-500 p-4 flex justify-between items-center text-white">
+                <button onclick="closeModal('loan-review-modal')" class="text-white hover:text-teal-200"><i
+                        class="ri-close-line text-2xl"></i></button>
+                <h3 class="text-lg font-bold">Review</h3>
+                <button onclick="closeModal('loan-review-modal')"
+                    class="text-sm font-bold text-teal-100 hover:text-white">Edit</button>
+            </div>
+
+            <!-- Content List -->
+            <div class="overflow-y-auto p-0 pb-6">
+                <!-- Row: Repayment Account -->
+                <div class="border-b border-gray-100 dark:border-gray-700 p-4">
+                    <p class="text-xs text-gray-500 mb-1">Repayment Account</p>
+                    <p class="font-bold text-gray-900 dark:text-gray-100" id="review-repayment-name">PAYGO-LCY</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" id="review-repayment-number">Loading...</p>
+                </div>
+
+                <!-- Row: Loan Amount -->
+                <div class="border-b border-gray-100 dark:border-gray-700 p-4">
+                    <p class="text-xs text-gray-500 mb-1">Loan Amount</p>
+                    <p class="font-black text-lg text-gray-900 dark:text-gray-100" id="review-loan-amount">KES 0</p>
+                </div>
+
+                <!-- Row: Take Home -->
+                <div class="border-b border-gray-100 dark:border-gray-700 p-4 bg-teal-50/30 dark:bg-teal-900/10">
+                    <p class="text-xs text-gray-500 mb-1">Take Home Amount</p>
+                    <p class="font-black text-lg text-gray-900 dark:text-gray-100" id="review-take-home">KES 0</p>
+                </div>
+
+                <!-- Row: Tenure -->
+                <div class="border-b border-gray-100 dark:border-gray-700 p-4">
+                    <p class="text-xs text-gray-500 mb-1">Tenure</p>
+                    <p class="font-bold text-gray-900 dark:text-gray-100">30 days</p>
+                </div>
+
+                <!-- Row: Processing Fee -->
+                <div class="border-b border-gray-100 dark:border-gray-700 p-4">
+                    <p class="text-xs text-gray-500 mb-1">Processing Fee</p>
+                    <p class="font-bold text-gray-900 dark:text-gray-100" id="review-processing-fee">KES 100</p>
+                </div>
+
+                <!-- Row: Insurance -->
+                <div class="border-b border-gray-100 dark:border-gray-700 p-4">
+                    <p class="text-xs text-gray-500 mb-1">Credit Life Insurance Premium</p>
+                    <p class="font-bold text-gray-900 dark:text-gray-100" id="review-insurance">KES 0</p>
+                </div>
+
+                <div class="p-4 mt-2">
+                    <button onclick="submitLoanRequest()" id="review-submit-btn"
+                        class="w-full bg-gray-200 text-gray-500 hover:bg-teal-500 hover:text-white py-4 rounded-full font-bold transition-all flex items-center justify-center gap-2">
+                        <span>Accept & Submit</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOAN REPAYMENT MODAL -->
+    <div id="repayment-modal" class="fixed inset-0 z-50 hidden flex items-start justify-center p-4 pt-20">
+        <div onclick="closeModal('repayment-modal')"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+        <div
+            class="bg-white dark:bg-gray-800 w-full max-w-sm rounded-2xl p-6 relative z-10 shadow-2xl overflow-y-auto max-h-[85vh] cultural-bg-modal">
+            <div class="text-center mb-6">
+                <div
+                    class="h-14 w-14 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                    <i class="ri-bank-card-2-line text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900 dark:text-gray-100">Repay Loan</h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400 font-medium mt-1">Make a payment towards your loan
+                </p>
+            </div>
+
+            <div id="repayment-loan-info"
+                class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">Principal</p>
+                        <p class="text-lg font-bold text-gray-900 dark:text-gray-100" id="rep-loan-principal">KES 0</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">Interest (10%)</p>
+                        <p class="text-lg font-bold text-orange-600" id="rep-loan-interest">KES 0</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Total Due</p>
+                        <p class="text-lg font-bold text-red-600" id="rep-loan-total">KES 0</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Balance</p>
+                        <p class="text-lg font-bold text-green-600" id="rep-loan-balance">KES 0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="repayment-form" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Repayment Amount
+                        (KES)</label>
+                    <input type="number" id="repayment-amount" placeholder="0" min="0"
+                        class="w-full bg-white dark:bg-gray-700 border-2 border-gray-100 dark:border-gray-600 rounded-xl p-4 text-xl font-bold outline-none focus:border-green-500 transition-colors text-center text-gray-900 dark:text-gray-100">
+                    <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-2 text-center">Max available: <span
+                            id="max-repayment">KES 0</span></p>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider ml-1">Payment
+                        Method</label>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <label
+                            class="flex items-center gap-2 p-3 border-2 border-gray-100 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                            onclick="updateRepayBtn('mpesa')">
+                            <input type="radio" name="repay-method" value="mpesa" checked
+                                class="w-4 h-4 text-green-600">
+                            <span class="text-sm font-bold">M-Pesa</span>
+                        </label>
+                        <label
+                            class="flex items-center gap-2 p-3 border-2 border-gray-100 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700"
+                            onclick="updateRepayBtn('savings')">
+                            <input type="radio" name="repay-method" value="savings" class="w-4 h-4 text-indigo-600">
+                            <span class="text-sm font-bold">Savings</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="submitRepayment(event)" id="repayment-btn"
+                    class="w-full bg-green-600 hover:bg-green-700 active:scale-95 text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2">
+                    <span>Send STK Push</span>
+                    <i class="ri-arrow-right-line"></i>
+                </button>
+
+                <p id="repayment-msg" class="text-center text-[10px] font-bold text-gray-400 dark:text-gray-500"></p>
+            </div>
+
+            <button onclick="closeModal('repayment-modal')"
+                class="absolute top-6 right-6 p-2 text-gray-300 dark:text-gray-500 hover:text-red-500 transition-colors">
+                <i class="ri-close-line text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://ckcxwsorhuauxijxzihv.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrY3h3c29yaHVhdXhpanh6aWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMzUyMjYsImV4cCI6MjA4NjkxMTIyNn0.l0tBqVbtzXWwVZCusz7BqKof4Eo8CAi88AEvV2uapO4';
+        const client = supabase.createClient(supabaseUrl, supabaseKey);
+        let user = null;
+        let userProfile = null;
+        let isPrivacyMode = false;
+        let maxLoanAmount = 0;
+        let numLoans = 0;
+        let profileInsertAttempts = 0;
+        let allHistoryTransactions = [];
+        let currentLoanBalance = 0;
+        const kenyaLocations = {
+            "Nairobi": ["Westlands", "Dagoretti", "Langata", "Kibra", "Roysambu", "Kasarani"],
+            "Mombasa": ["Changamwe", "Jomvu", "Kisauni", "Nyali", "Likoni", "Mvita"],
+            "Kisumu": ["Kisumu East", "Kisumu West", "Kisumu Central", "Seme", "Nyando"],
+            "Kiambu": ["Kiambu", "Ruiru", "Thika", "Juja", "Gatundu", "Limuru"],
+            "Nakuru": ["Nakuru Town", "Naivasha", "Gilgil", "Molo", "Njoro"],
+            "Homa Bay": ["Homa Bay Town", "Kabondo", "Kasipul", "Rangwe", "Mbita"]
+        };
+
+        // 1. INIT
+        client.auth.onAuthStateChange(async (e, session) => {
+            if (session) {
+                user = session.user;
+                loadData();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+
+        // 2. LOAD DATA
+        async function loadData() {
+            // Fetch fresh profile data
+            const { data } = await client.from('profiles').select('*').eq('id', user.id).maybeSingle();
+
+            if (data) {
+                userProfile = data;
+                updateUI();
+                loadGuarantorRequests();
+                loadLoansView();
+                setInterval(loadGuarantorRequests, 5000);
+                setInterval(refreshBalance, 5000); // Fix: Auto-refresh balance
+            } else {
+                // If profile missing, create one but avoid infinite reload loops.
+                profileInsertAttempts += 1;
+                if (profileInsertAttempts > 3) {
+                    console.error('Failed to create profile after multiple attempts. Check DB triggers or permissions.');
+                    alert('Could not create profile automatically. Please contact admin.');
+                    return;
+                }
+
+                // Attempt to upsert a minimal profile record using the auth user id.
+                // Do NOT provide j_number or member_number here — let the DB trigger/sequence assign them.
+                const safeProfile = {
+                    id: user.id,
+                    full_name: (user.user_metadata && user.user_metadata.first_name) ? (user.user_metadata.first_name + ' ' + (user.user_metadata.last_name || '')) : 'New Member',
+                    phone: (user.user_metadata && user.user_metadata.phone) ? user.user_metadata.phone : '',
+                    email: user.email, // Fix: Ensure email is saved if profile is created via dashboard
+                    savings_balance: 0,
+                    country: (user.user_metadata && user.user_metadata.country) ? user.user_metadata.country : 'Kenya',
+                    county: (user.user_metadata && user.user_metadata.county) ? user.user_metadata.county : null,
+                    sub_county: (user.user_metadata && user.user_metadata.sub_county) ? user.user_metadata.sub_county : null,
+                    ward: (user.user_metadata && user.user_metadata.ward) ? user.user_metadata.ward : null
+                };
+
+                const { data: upserted, error: upsertErr } = await client.from('profiles').upsert(safeProfile).select();
+
+                if (upsertErr) {
+                    console.error('Profile upsert error:', upsertErr);
+                    alert('Error creating profile: ' + upsertErr.message + '. Check server logs.');
+                    return;
+                }
+
+                // Load data again after a short delay to allow DB triggers to populate generated fields
+                setTimeout(loadData, 800);
+            }
+        }
+
+        // New function to keep balance in sync
+        async function refreshBalance() {
+            const { data } = await client.from('profiles').select('*').eq('id', user.id).maybeSingle();
+            if (data) {
+                userProfile = data;
+                updateUI(); // Updates the HTML elements with new numbers
+            }
+        }
+
+        // 3. UPDATE UI
+        function updateUI() {
+            document.getElementById('member-id').innerText = userProfile.member_number || 'Member';
+            updateBalance('bal-savings', userProfile.savings_balance || 0);
+            updateBalance('bal-shares', userProfile.share_capital || 0);
+            updateBalance('loan-limit', (userProfile.savings_balance || 0) * 3);
+            updateBalance('locked-guarantees', userProfile.locked_guarantee_amount || 0);
+            updateNetSavings();
+
+            // Update Header Info
+            const firstName = (userProfile.full_name || userProfile.first_name || 'Member').split(' ')[0];
+            const headerNameEl = document.getElementById('header-firstname');
+            if (headerNameEl) headerNameEl.innerText = firstName;
+
+            const avatarEl = document.getElementById('header-avatar');
+            if (avatarEl) {
+                if (userProfile.avatar_url) avatarEl.src = userProfile.avatar_url;
+                else avatarEl.src = `https://ui-avatars.com/api/?name=${firstName}&background=random`;
+            }
+        }
+
+        function updateBalance(elemId, amount) {
+            const elem = document.getElementById(elemId); // This might be multiple elements
+            if (isPrivacyMode) {
+                elem.classList.add('blur-balance');
+            } else {
+                elem.classList.remove('blur-balance');
+            }
+            elem.innerText = amount.toLocaleString();
+        }
+
+        function updateNetSavings() {
+            if (!userProfile) return;
+            const savings = userProfile.savings_balance || 0;
+            const locked = userProfile.locked_guarantee_amount || 0;
+            const net = savings - (currentLoanBalance + locked);
+            updateBalance('bal-net-savings', net);
+        }
+
+        // 4. PRIVACY MODE
+        function togglePrivacyMode() {
+            const toggle = document.getElementById('privacy-toggle');
+            const indicator = document.getElementById('privacy-indicator');
+
+            if (toggle.classList.contains('bg-indigo-600')) { // Is currently on, turn off
+                isPrivacyMode = false;
+                toggle.classList.remove('bg-indigo-600', 'dark:bg-indigo-500');
+                toggle.classList.add('bg-gray-300');
+                indicator.classList.remove('translate-x-5');
+            } else { // Is currently off, turn on
+                isPrivacyMode = true;
+                toggle.classList.add('bg-indigo-600', 'dark:bg-indigo-500');
+                toggle.classList.remove('bg-gray-300');
+                indicator.classList.add('translate-x-5');
+            }
+
+            document.querySelectorAll('.balance-amount').forEach(el => {
+                el.classList.toggle('blur-balance', isPrivacyMode);
+            });
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateDarkModeToggleUI();
+        }
+
+        function updateDarkModeToggleUI() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const toggle = document.getElementById('dark-mode-toggle');
+            const indicator = document.getElementById('dark-mode-indicator');
+
+            if (!toggle || !indicator) return;
+
+            indicator.classList.toggle('translate-x-5', isDark);
+
+            if (isDark) {
+                toggle.classList.remove('bg-gray-300');
+                toggle.classList.add('bg-indigo-600', 'dark:bg-indigo-500');
+            } else {
+                toggle.classList.add('bg-gray-300');
+                toggle.classList.remove('bg-indigo-600', 'dark:bg-indigo-500');
+            }
+        }
+
+        // 5. CARD SCROLL INDICATOR
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.querySelector('.cards-container');
+            if (container) {
+                container.addEventListener('scroll', () => {
+                    const scrollLeft = container.scrollLeft;
+                    const cardWidth = container.querySelector('.card').offsetWidth + 16;
+                    const activeCard = Math.round(scrollLeft / cardWidth);
+
+                    document.querySelectorAll('[id^="dot-"]').forEach((dot, idx) => {
+                        if (idx === activeCard) {
+                            dot.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+                            dot.classList.add('bg-indigo-600', 'dark:bg-indigo-400', 'w-6');
+                        } else {
+                            dot.classList.remove('bg-indigo-600', 'dark:bg-indigo-400', 'w-6');
+                            dot.classList.add('bg-gray-300', 'dark:bg-gray-600');
+                        }
+                    });
+                });
+            }
+        });
+
+        // 6. MODALS
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function doAction(type) {
+            if (type === 'deposit') {
+                const phoneInput = document.getElementById('dep-phone');
+                if (userProfile && userProfile.phone) {
+                    let cleanPhone = userProfile.phone.replace(/\D/g, '');
+                    if (cleanPhone.startsWith('254')) cleanPhone = cleanPhone.substring(3);
+                    if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
+                    phoneInput.value = cleanPhone;
+                }
+                document.getElementById('deposit-modal').classList.remove('hidden');
+            }
+            else if (type === 'withdraw') {
+                document.getElementById('avail-bal').innerText = "KES " + (userProfile.savings_balance || 0).toLocaleString();
+                document.getElementById('withdraw-modal').classList.remove('hidden');
+            }
+            else if (type === 'transfer') {
+                document.getElementById('transfer-avail-bal').innerText = "KES " + (userProfile.savings_balance || 0).toLocaleString();
+                document.getElementById('transfer-modal').classList.remove('hidden');
+            }
+            else if (type === 'loan') {
+                document.getElementById('loan-modal').classList.remove('hidden');
+                checkLoanEligibility();
+            }
+        }
+
+        // 7. NAVIGATION
+        function switchView(view) {
+            const dashboardView = document.getElementById('dashboard-view');
+            const loansView = document.getElementById('loans-view');
+            const guarantorView = document.getElementById('guarantor-view');
+            const historyView = document.getElementById('history-view');
+
+            if (dashboardView) dashboardView.classList.toggle('hidden', view !== 'dashboard');
+            if (loansView) loansView.classList.toggle('hidden', view !== 'loans');
+            if (guarantorView) guarantorView.classList.toggle('hidden', view !== 'guarantor');
+            if (historyView) historyView.classList.toggle('hidden', view !== 'history');
+
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(el => el.classList.remove('active', 'border-t-4', 'border-indigo-600', 'dark:border-indigo-400'));
+
+            const activeNav = Array.from(navItems).find(el => {
+                const text = el.querySelector('span')?.innerText.toLowerCase();
+                if (view === 'dashboard') return text === 'home';
+                if (view === 'loans') return text === 'loans';
+                if (view === 'guarantor') return text === 'guarantor';
+                if (view === 'history') return text === 'history';
+                return false;
+            });
+            if (activeNav) activeNav.classList.add('active', 'border-t-4', 'border-indigo-600', 'dark:border-indigo-400');
+
+            if (view === 'history') loadAllTransactions();
+            if (view === 'loans') loadLoansView();
+            if (view === 'guarantor') loadGuarantorView();
+        }
+
+        // 8. RECENT TRANSACTIONS
+        async function loadAllTransactions() {
+            const { data: txs } = await client
+                .from('transactions')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            allHistoryTransactions = txs || [];
+            filterHistory();
+        }
+
+        function filterHistory() {
+            const search = document.getElementById('history-search').value.toLowerCase();
+            const filter = document.getElementById('history-filter').value;
+            const container = document.getElementById('history-list');
+
+            let filtered = allHistoryTransactions;
+
+            // Filter by Type
+            if (filter !== 'all') {
+                filtered = filtered.filter(tx => tx.type === filter);
+            }
+
+            // Filter by Search
+            if (search) {
+                filtered = filtered.filter(tx => {
+                    const amount = tx.amount.toString();
+                    const date = new Date(tx.created_at).toLocaleDateString().toLowerCase();
+                    const status = (tx.status || '').toLowerCase();
+                    // Map types to readable names for search
+                    let typeName = '';
+                    if (tx.type === 'deposit') typeName = 'deposit';
+                    else if (tx.type === 'withdrawal') typeName = 'withdrawal';
+                    else if (tx.type === 'loan_disbursement') typeName = 'loan';
+                    else if (tx.type === 'repayment') typeName = 'repayment';
+                    else if (tx.type === 'share_transfer') typeName = 'share transfer';
+
+                    return amount.includes(search) || date.includes(search) || status.includes(search) || typeName.includes(search);
+                });
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 text-sm py-4">No transactions found</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(tx => formatTransaction(tx)).join('');
+        }
+
+        function exportHistoryToCSV() {
+            const search = document.getElementById('history-search').value.toLowerCase();
+            const filter = document.getElementById('history-filter').value;
+
+            let filtered = allHistoryTransactions;
+
+            // Filter by Type
+            if (filter !== 'all') {
+                filtered = filtered.filter(tx => tx.type === filter);
+            }
+
+            // Filter by Search
+            if (search) {
+                filtered = filtered.filter(tx => {
+                    const amount = tx.amount.toString();
+                    const date = new Date(tx.created_at).toLocaleDateString().toLowerCase();
+                    const status = (tx.status || '').toLowerCase();
+                    let typeName = '';
+                    if (tx.type === 'deposit') typeName = 'deposit';
+                    else if (tx.type === 'withdrawal') typeName = 'withdrawal';
+                    else if (tx.type === 'loan_disbursement') typeName = 'loan';
+                    else if (tx.type === 'repayment') typeName = 'repayment';
+                    else if (tx.type === 'share_transfer') typeName = 'share transfer';
+
+                    return amount.includes(search) || date.includes(search) || status.includes(search) || typeName.includes(search);
+                });
+            }
+
+            if (filtered.length === 0) {
+                alert("No transactions to export");
+                return;
+            }
+
+            let csvContent = "Date,Type,Amount,Status,Reference\n";
+            filtered.forEach(tx => {
+                const date = new Date(tx.created_at).toLocaleDateString();
+                const status = tx.status || 'completed';
+                const ref = tx.mpesa_code || '-';
+                csvContent += `${date},${tx.type},${tx.amount},${status},${ref}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "transaction_history.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadShareCertificate() {
+            if (!userProfile) return;
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a5'
+            });
+
+            // Background & Border
+            doc.setLineWidth(2);
+            doc.setDrawColor(22, 163, 74); // Green-600
+            doc.rect(5, 5, 200, 138);
+
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(22, 163, 74);
+            doc.rect(8, 8, 194, 132);
+
+            // Load Logo
+            const img = new Image();
+            img.src = 'juvinal.png';
+            img.onload = function () {
+                doc.addImage(img, 'PNG', 95, 12, 18, 18);
+                finishPDF();
+            };
+            img.onerror = function () {
+                console.warn('Could not load logo for certificate, generating without it.');
+                finishPDF();
+            };
+
+            function finishPDF() {
+                // Header
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(24);
+                doc.setTextColor(22, 163, 74);
+                // Shifted down by ~10mm to account for logo
+                doc.text("JUVINAL PAY SACCO", 105, 36, null, null, "center");
+
+                doc.setFontSize(16);
+                doc.setTextColor(60, 60, 60);
+                doc.text("SHARE CAPITAL CERTIFICATE", 105, 46, null, null, "center");
+
+                // Content
+                doc.setFont("times", "normal");
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+
+                doc.text("This is to certify that", 105, 62, null, null, "center");
+
+                doc.setFont("times", "bold");
+                doc.setFontSize(18);
+                doc.text((userProfile.full_name || "Valued Member").toUpperCase(), 105, 72, null, null, "center");
+
+                doc.setFont("times", "normal");
+                doc.setFontSize(12);
+                doc.text(`Member No: ${userProfile.member_number || 'PENDING'}`, 105, 82, null, null, "center");
+                doc.text(`ID Number: ${userProfile.id_number || 'N/A'}`, 105, 89, null, null, "center");
+
+                doc.text("Is the registered holder of Share Capital to the value of:", 105, 102, null, null, "center");
+
+                doc.setFont("times", "bold");
+                doc.setFontSize(22);
+                doc.setTextColor(22, 163, 74);
+                doc.text(`KES ${(userProfile.share_capital || 0).toLocaleString()}`, 105, 115, null, null, "center");
+
+                // Footer
+                doc.setFont("times", "italic");
+                doc.setFontSize(10);
+                doc.setTextColor(150, 150, 150);
+                doc.text(`Authorized by Sacco Administration on ${new Date().toLocaleDateString()}`, 105, 135, null, null, "center");
+
+                // Save
+                doc.save(`Juvinal_Share_Certificate_${userProfile.member_number || 'New'}.pdf`);
+            }
+        }
+
+        function formatTransaction(tx) {
+            const date = new Date(tx.created_at).toLocaleDateString();
+            let badge = '', icon = '', color = '', statusText = '';
+
+            if (tx.type === 'deposit') {
+                badge = 'Deposit';
+                icon = 'ri-add-circle-line';
+                color = 'text-green-600';
+                statusText = 'Completed';
+            } else if (tx.type === 'withdrawal') {
+                const status = tx.status || 'pending';
+                badge = status === 'completed' ? 'Disbursed ✅' : status === 'rejected' ? 'Rejected ❌' : '⏳ Pending';
+                icon = 'ri-bank-card-line';
+                color = 'text-orange-600';
+                statusText = status === 'completed' ? 'Processed' : status === 'rejected' ? 'Declined' : 'Awaiting approval';
+            } else if (tx.type === 'loan_disbursement') {
+                badge = 'Loan';
+                icon = 'ri-hand-coin-line';
+                color = 'text-indigo-600';
+                statusText = 'Disbursed';
+            } else if (tx.type === 'repayment') {
+                badge = 'Loan Repayment';
+                icon = 'ri-loop-left-line';
+                color = 'text-blue-600';
+                statusText = 'Completed';
+            } else if (tx.type === 'share_transfer') {
+                badge = 'Shares Bought';
+                icon = 'ri-exchange-funds-line';
+                color = 'text-purple-600';
+                statusText = 'Internal Transfer';
+            }
+
+            return `
+                <div class="bg-white dark:bg-gray-700/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i class="ri-${icon.replace('ri-', '')} ${color} text-lg"></i>
+                        <div>
+                            <p class="text-xs font-bold text-gray-900">${badge}</p>
+                            <p class="text-[10px] text-gray-500">${date}</p>
+                        </div>
+                    </div>
+                    <span class="text-sm font-bold ${color}">KES ${tx.amount.toLocaleString()}</span>
+                </div>
+            `;
+        }
+
+        // 9. LOANS VIEW
+        async function loadLoansView() {
+            const { data: loans } = await client
+                .from('loans')
+                .select('*')
+                .eq('borrower_id', user.id)
+                .order('created_at', { ascending: false });
+
+            // Fetch repayments to show payment history
+            const { data: repayments } = await client
+                .from('repayments')
+                .select('loan_id, amount, created_at')
+                .eq('user_id', user.id)
+                .eq('status', 'confirmed')
+                .order('created_at', { ascending: false });
+
+            // Show all loans in loans view
+            const container = document.getElementById('loans-list');
+            const summaryContainer = document.getElementById('loans-summary-container');
+
+            if (!loans || loans.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-6">No loans yet. Apply for one!</div>';
+                if (summaryContainer) summaryContainer.innerHTML = '';
+                return;
+            }
+
+            let totalOutstanding = 0;
+            let activeCount = 0;
+
+            container.innerHTML = loans.map(loan => {
+                const principal = parseFloat(loan.amount);
+                const accruedInterest = parseFloat(loan.accrued_interest || 0);
+                const penalty = parseFloat(loan.penalty_amount || 0);
+                const totalDue = principal + accruedInterest + penalty;
+                const totalRepaid = parseFloat(loan.total_repaid || 0);
+                const balance = totalDue - totalRepaid;
+
+                if (loan.status === 'active') {
+                    totalOutstanding += Math.max(0, balance);
+                    activeCount++;
+                }
+
+                // Find last payment
+                const lastPayment = repayments ? repayments.find(r => r.loan_id === loan.id) : null;
+                const lastPayText = lastPayment
+                    ? `Paid KES ${lastPayment.amount.toLocaleString()} on ${new Date(lastPayment.created_at).toLocaleDateString()}`
+                    : 'No payments yet';
+
+                // Progress calculation
+                const progress = Math.min(100, Math.round((totalRepaid / totalDue) * 100)) || 0;
+                const statusColors = {
+                    'active': 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
+                    'pending': 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300',
+                    'closed': 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
+                    'rejected': 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
+                };
+
+                return `
+                    <div class="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Loan #${loan.id.substring(0, 8)}</p>
+                                <p class="text-xs text-gray-400">${new Date(loan.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded uppercase ${statusColors[loan.status] || 'bg-gray-100'}">
+                                ${loan.status}
+                            </span>
+                        </div>
+                        
+                        <div class="flex justify-between items-end mb-2">
+                            <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Outstanding Balance</p>
+                                <p class="text-xl font-bold ${balance > 0 ? 'text-red-600' : 'text-green-600'}">KES ${Math.max(0, balance).toLocaleString()}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Principal</p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100">KES ${principal.toLocaleString()}</p>
+                            </div>
+                        </div>
+
+                        ${(accruedInterest > 0 || penalty > 0) ? `
+                        <div class="flex justify-between text-[10px] text-gray-500 mb-2 px-1">
+                            <span>Interest: KES ${accruedInterest.toLocaleString()}</span>
+                            ${penalty > 0 ? `<span class="text-red-400">Penalty: KES ${penalty.toLocaleString()}</span>` : ''}
+                        </div>
+                        ` : ''}
+
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-2 mb-3">
+                            <div class="bg-${balance > 0 ? 'indigo' : 'green'}-500 h-2 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center text-[10px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg mb-3">
+                            <span class="flex items-center gap-1"><i class="ri-history-line"></i> ${lastPayText}</span>
+                            <span class="font-bold">${progress}% Paid</span>
+                        </div>
+
+                        ${loan.status === 'active' ? `
+                            <button onclick="openRepaymentModal('${loan.id}', ${principal}, ${accruedInterest}, ${penalty}, ${totalRepaid})" 
+                                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                                <span>Pay Now</span>
+                                <i class="ri-arrow-right-line"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            // Calculate how much of the outstanding balance is covered by external guarantors
+            let totalGuaranteedByOthers = 0;
+            const activeLoanIds = loans.filter(l => l.status === 'active').map(l => l.id);
+
+            if (activeLoanIds.length > 0) {
+                const { data: guarantees } = await client
+                    .from('guarantees')
+                    .select('amount')
+                    .in('loan_id', activeLoanIds)
+                    .eq('status', 'locked');
+
+                if (guarantees) {
+                    totalGuaranteedByOthers = guarantees.reduce((sum, g) => sum + parseFloat(g.amount), 0);
+                }
+            }
+
+            // The user's required collateral for their own loans is isolated
+            currentLoanBalance = Math.max(0, totalOutstanding - totalGuaranteedByOthers);
+            updateNetSavings();
+
+            // Render Summary Card
+            if (summaryContainer) {
+                summaryContainer.innerHTML = `
+                    <div class="bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl p-6 text-white shadow-lg mb-6 relative overflow-hidden">
+                        <div class="relative z-10">
+                            <p class="text-red-100 text-xs font-bold uppercase tracking-wider mb-1">Total Unpaid Loans</p>
+                            <h2 class="text-3xl font-extrabold">KES ${totalOutstanding.toLocaleString()}</h2>
+                            <p class="text-xs text-red-100 mt-2 opacity-80">${activeCount} active loan(s)</p>
+                        </div>
+                        <div class="absolute -right-4 -bottom-4 opacity-20 transform rotate-12">
+                            <i class="ri-hand-coin-fill text-9xl"></i>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // === LOAN REPAYMENT FUNCTIONS ===
+        async function openRepaymentModal(loanId, principal, accruedInterest, penalty, totalRepaid) {
+            const principal_amt = parseFloat(principal);
+            const interest = parseFloat(accruedInterest) || 0;
+            const pen = parseFloat(penalty) || 0;
+            const totalDue = principal_amt + interest + pen;
+            const balance = totalDue - parseFloat(totalRepaid || 0);
+
+            document.getElementById('rep-loan-principal').innerText = `KES ${principal_amt.toLocaleString()}`;
+            document.getElementById('rep-loan-interest').innerText = `KES ${(interest + pen).toLocaleString()}`; // Combine interest and penalty for UI simplicity if preferred, or add a span.
+            document.getElementById('rep-loan-total').innerText = `KES ${totalDue.toLocaleString()}`;
+            document.getElementById('rep-loan-balance').innerText = `KES ${Math.max(0, balance).toLocaleString()}`;
+            document.getElementById('max-repayment').innerText = `KES ${Math.max(0, balance).toLocaleString()}`;
+            document.getElementById('repayment-amount').max = Math.max(0, balance);
+            document.getElementById('repayment-amount').value = '';
+
+            // Reset method to M-Pesa
+            const radios = document.getElementsByName('repay-method');
+            if (radios.length > 0) radios[0].checked = true;
+            updateRepayBtn('mpesa');
+
+            // Store loan ID for submission (phone comes from userProfile)
+            document.getElementById('repayment-modal').setAttribute('data-loan-id', loanId);
+
+            document.getElementById('repayment-modal').classList.remove('hidden');
+        }
+
+        function updateRepayBtn(method) {
+            const btn = document.getElementById('repayment-btn');
+            if (method === 'mpesa') {
+                btn.innerHTML = `<span>Send STK Push</span><i class="ri-arrow-right-line"></i>`;
+                btn.className = "w-full bg-green-600 hover:bg-green-700 active:scale-95 text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2";
+            } else {
+                btn.innerHTML = `<span>Pay from Savings</span><i class="ri-wallet-3-line"></i>`;
+                btn.className = "w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2";
+            }
+        }
+
+        async function submitRepayment(evt) {
+            const modal = document.getElementById('repayment-modal');
+            const loanId = modal.getAttribute('data-loan-id');
+            const amount = parseFloat(document.getElementById('repayment-amount').value);
+            const phone = userProfile?.phone; // Get from logged-in user profile
+            const method = document.querySelector('input[name="repay-method"]:checked').value;
+
+            if (!amount || amount < 10) {
+                alert('Repayment must be at least KES 10');
+                return;
+            }
+
+            if (method === 'savings') {
+                const savings = userProfile.savings_balance || 0;
+                if (amount > savings) {
+                    alert(`Insufficient savings! You have KES ${savings.toLocaleString()} but are trying to pay KES ${amount.toLocaleString()}`);
+                    return;
+                }
+            }
+
+            if (!phone) {
+                alert('Please update your phone number in profile settings');
+                return;
+            }
+
+            const btn = evt.target;
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            try {
+                console.log(`Creating repayment: Loan=${loanId}, Amount=${amount}, Method=${method}`);
+
+                // 1. Create repayment record in database
+                const { data: repayment, error: repayErr } = await client.from('repayments').insert({
+                    loan_id: loanId,
+                    user_id: user.id,
+                    amount: amount,
+                    phone: phone,
+                    status: 'pending',
+                    payment_method: method
+                }).select();
+
+                if (repayErr) throw new Error('Failed to create repayment: ' + repayErr.message);
+
+                console.log('✅ Repayment record created:', repayment[0].id);
+
+                if (method === 'mpesa') {
+                    // 2A. Send STK push via edge function
+                    console.log('📱 Sending STK push to', phone);
+                    const { data: { session } } = await client.auth.getSession();
+
+                    const queryParams = new URLSearchParams({
+                        phone: phone,
+                        amount: amount.toString(),
+                        repaymentId: repayment[0].id // Link STK push to this repayment
+                    });
+
+                    const stkResponse = await fetch(
+                        'https://ckcxwsorhuauxijxzihv.supabase.co/functions/v1/mpesa-push?' + queryParams,
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + session.access_token
+                            }
+                        }
+                    );
+
+                    const stkData = await stkResponse.json();
+                    if (!stkResponse.ok) throw new Error('STK push failed: ' + (stkData.error || 'Unknown error'));
+
+                    console.log('✅ STK push sent successfully:', stkData);
+                    alert('✅ STK Push sent! Check your phone for M-Pesa prompt.');
+                } else {
+                    // 2B. Process Savings Payment via Edge Function
+                    console.log('💰 Processing savings payment...');
+                    const { data: { session } } = await client.auth.getSession();
+
+                    const res = await fetch('https://ckcxwsorhuauxijxzihv.supabase.co/functions/v1/mpesa-disburse', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + session.access_token
+                        },
+                        body: JSON.stringify({
+                            repaymentId: repayment[0].id,
+                            userId: user.id,
+                            amount: amount
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+
+                    alert('✅ Payment successful! Loan balance updated.');
+                }
+
+                closeModal('repayment-modal');
+
+                // Reload loans after brief delay to show updated balance
+                setTimeout(() => {
+                    loadLoansView();
+                    loadData();
+                }, 2000);
+
+            } catch (err) {
+                console.error('Repayment error:', err);
+                document.getElementById('repayment-msg').innerText = 'Error: ' + err.message;
+                alert('Error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                updateRepayBtn(method);
+            }
+        }
+
+        // 10. GUARANTOR VIEW
+        async function loadGuarantorView() {
+            const { data: requests } = await client
+                .from('guarantor_requests')
+                .select('*, loans(amount), profiles(full_name)')
+                .eq('guarantor_id', user.id)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: false });
+
+            const container = document.getElementById('guarantor-list');
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-6">No requests</div>';
+                return;
+            }
+
+            container.innerHTML = requests.map(req => `
+                <div class="bg-white p-4 rounded-xl border border-yellow-200">
+                    <p class="text-xs font-bold text-gray-700 mb-2">${req.profiles?.full_name || 'Member'}</p>
+                    <p class="text-sm font-bold text-gray-900 mb-3">KES ${req.amount_guaranteed.toLocaleString()}</p>
+                    <div class="flex gap-2">
+                        <button onclick="acceptGuarantee('${req.id}', ${req.amount_guaranteed})" class="flex-1 bg-green-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-green-700 transition-colors">Accept</button>
+                        <button onclick="declineGuarantee('${req.id}')" class="flex-1 bg-red-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-red-700 transition-colors">Decline</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 11. GUARANTOR FUNCTIONS
+        async function loadGuarantorRequests() {
+            const { data: requests } = await client
+                .from('guarantor_requests')
+                .select('*')
+                .eq('guarantor_id', user.id)
+                .eq('status', 'pending');
+
+            const badge = document.getElementById('notif-badge');
+            if (requests && requests.length > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            const container = document.getElementById('notifications-list');
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-6">No guarantor requests</div>';
+                return;
+            }
+
+            container.innerHTML = requests.map(req => `
+                <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-yellow-200 dark:border-yellow-700">
+                    <p class="text-sm font-bold text-gray-900 mb-3">KES ${req.amount_guaranteed.toLocaleString()}</p>
+                    <div class="flex gap-2">
+                        <button onclick="acceptGuarantee('${req.id}', ${req.amount_guaranteed})" class="flex-1 bg-green-600 text-white text-xs font-bold py-2 rounded-lg">Accept</button>
+                        <button onclick="declineGuarantee('${req.id}')" class="flex-1 bg-red-600 text-white text-xs font-bold py-2 rounded-lg">Decline</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function acceptGuarantee(requestId, amount) {
+            try {
+                const { data: request } = await client
+                    .from('guarantor_requests')
+                    .select('loan_id, guarantor_id')
+                    .eq('id', requestId)
+                    .single();
+
+                await client.from('guarantor_requests').update({ status: 'accepted' }).eq('id', requestId);
+                await client.from('guarantees').insert({
+                    loan_id: request.loan_id,
+                    guarantor_id: request.guarantor_id,
+                    amount: amount,
+                    status: 'locked'
+                });
+
+                const { data: guarantor } = await client.from('profiles').select('locked_guarantee_amount').eq('id', request.guarantor_id).single();
+                const newLocked = (guarantor?.locked_guarantee_amount || 0) + amount;
+                await client.from('profiles').update({ locked_guarantee_amount: newLocked }).eq('id', request.guarantor_id);
+
+                alert('✅ Guarantee accepted!');
+                loadGuarantorRequests();
+                updateUI();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function declineGuarantee(requestId) {
+            if (!confirm('Decline this guarantee?')) return;
+            try {
+                await client.from('guarantor_requests').update({ status: 'declined' }).eq('id', requestId);
+                alert('❌ Declined');
+                loadGuarantorRequests();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // 12. LOAN ELIGIBILITY
+        function checkGuarantorRequirement() {
+            const amount = parseFloat(document.getElementById('loan-amount').value) || 0;
+            const savings = userProfile.savings_balance || 0;
+            const section = document.getElementById('guarantor-section');
+            if (amount > savings && amount > 0) {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+                clearGuarantorSelection();
+            }
+        }
+
+        async function checkLoanEligibility() {
+            try {
+                const sixMonthsAgo = new Date();
+                sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+                const { data: deposits } = await client
+                    .from('transactions')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .eq('type', 'deposit')
+                    .gt('created_at', sixMonthsAgo.toISOString());
+
+                // FIX: Count ALL loans (Active + Closed) to determine tier (1st, 2nd, 3rd)
+                const { data: allLoans } = await client
+                    .from('loans')
+                    .select('id, status')
+                    .eq('borrower_id', user.id)
+                    .neq('status', 'rejected'); // Exclude rejected applications
+
+                const monthCount = deposits ? new Set(deposits.map(d => new Date(d.created_at).toLocaleString('en-US', { month: 'numeric', year: 'numeric' }))).size : 0;
+                const avgMonthly = deposits ? deposits.reduce((sum, d) => sum + d.amount, 0) / Math.max(monthCount, 1) : 0;
+
+                // Tier is based on how many loans you have EVER taken (plus this new one)
+                const historicalLoanCount = allLoans ? allLoans.length : 0;
+                const nextLoanTier = historicalLoanCount + 1; // 1st, 2nd, 3rd...
+
+                const savings = userProfile.savings_balance || 0;
+
+                let maxLoan = 0;
+                let canApply = false;
+                let eligibilityMessage = '';
+
+                const hasActiveOrPending = allLoans ? allLoans.some(l => l.status === 'active' || l.status === 'pending') : false;
+
+                if (hasActiveOrPending) {
+                    eligibilityMessage = `<p class="text-red-600"><i class="ri-close-circle-line"></i> You already have an active or pending loan.</p>`;
+                } else if (monthCount < 6) {
+                    eligibilityMessage = `<p class="text-red-600"><i class="ri-close-circle-line"></i> ${6 - monthCount} more months to go</p>`;
+                } else if (avgMonthly < 500) {
+                    eligibilityMessage = `<p class="text-red-600"><i class="ri-close-circle-line"></i> Monthly avg KES ${Math.round(avgMonthly)}</p>`;
+                } else {
+                    canApply = true;
+                    // Logic: 1st Loan = 1x, 2nd Loan = 2x, 3rd Loan = 3x
+                    // Cap at 3x for any loan after the 3rd
+                    const multiplier = Math.min(3, nextLoanTier);
+                    maxLoan = savings * multiplier;
+                    maxLoanAmount = maxLoan;
+                    eligibilityMessage = `
+                        <p class="text-green-600"><i class="ri-check-circle-line"></i> ✅ Eligible!</p>
+                        <p class="text-xs text-gray-600 mt-2">Loan Tier: ${nextLoanTier} (${multiplier}x Savings) | Max: KES ${maxLoan.toLocaleString()}</p>
+                    `;
+                }
+
+                document.getElementById('eligibility-content').innerHTML = eligibilityMessage;
+
+                if (canApply) {
+                    document.getElementById('loan-form').classList.remove('hidden');
+                    document.getElementById('loan-btn').classList.remove('hidden');
+                    document.getElementById('max-loan').innerText = "KES " + maxLoan.toLocaleString();
+                }
+            } catch (err) {
+                document.getElementById('eligibility-content').innerHTML = `<p class="text-red-600">Error:</p>`;
+            }
+        }
+
+        // === WITHDRAWAL & TRANSFER ===
+        function openWithdrawModal() {
+            document.getElementById('withdraw-modal').classList.remove('hidden');
+            const savings = parseFloat(userProfile?.savings_balance || 0);
+            const locked = parseFloat(userProfile?.locked_guarantee_amount || 0);
+            const loans = parseFloat(currentLoanBalance || 0); // Active loan deductor
+            const net = Math.max(0, savings - (locked + loans));
+
+            document.getElementById('wd-max').innerText = `Max: KES ${net.toLocaleString()}`;
+            document.getElementById('wd-amount').max = net;
+            document.getElementById('wd-btn').disabled = false;
+            document.getElementById('wd-msg').innerText = '';
+        }
+
+        function openLoanReview() {
+            const amount = parseFloat(document.getElementById('loan-amount').value);
+            const disburseMethod = document.querySelector('input[name="disburse"]:checked').value;
+
+            if (!amount || amount < 100) {
+                alert('Loan must be KES 100+');
+                return;
+            }
+
+            const savings = userProfile.savings_balance || 0;
+            const totalGuaranteed = selectedGuarantors.reduce((sum, g) => sum + g.amount, 0);
+            const totalCovered = savings + totalGuaranteed;
+
+            if (amount > totalCovered) {
+                const deficit = amount - totalCovered;
+                alert(`⚠️ Insufficient Coverage!\n\nLoan Amount: KES ${amount.toLocaleString()}\nYour Savings: KES ${savings.toLocaleString()}\nGuarantees: KES ${totalGuaranteed.toLocaleString()}\n\nDeficit: KES ${deficit.toLocaleString()}\n\nPlease add more guarantors.`);
+                return;
+            }
+
+            // Calculations
+            const processingFee = 100;
+            const insuranceCharge = amount * 0.003;
+            const takeHome = amount - processingFee - insuranceCharge;
+
+            // Populate Modal
+            document.getElementById('review-repayment-name').innerText = disburseMethod === 'mpesa' ? 'M-PESA WALLET' : 'SACCO SAVINGS';
+            document.getElementById('review-repayment-number').innerText = disburseMethod === 'mpesa' ? (userProfile.phone || 'Unknown') : 'Internal Transfer';
+            document.getElementById('review-loan-amount').innerText = `KES ${amount.toLocaleString()}`;
+            document.getElementById('review-take-home').innerText = `KES ${takeHome.toLocaleString()}`;
+            document.getElementById('review-processing-fee').innerText = `KES ${processingFee.toLocaleString()}`;
+            document.getElementById('review-insurance').innerText = `KES ${insuranceCharge.toLocaleString()}`;
+
+            // Switch modals
+            closeModal('loan-modal');
+            document.getElementById('loan-review-modal').classList.remove('hidden');
+        }
+
+        async function submitLoanRequest() {
+            const amount = parseFloat(document.getElementById('loan-amount').value);
+            const disburseMethod = document.querySelector('input[name="disburse"]:checked').value;
+
+            const processingFee = 100;
+            const insuranceCharge = amount * 0.003;
+            const takeHome = amount - processingFee - insuranceCharge;
+
+            const btn = document.getElementById('review-submit-btn');
+            btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Processing...`;
+            btn.disabled = true;
+
+            try {
+                // Insert Loan with new columns
+                const { data: loan, error: loanErr } = await client.from('loans').insert({
+                    borrower_id: user.id,
+                    amount: amount,
+                    processing_fee: processingFee,
+                    insurance_charge: insuranceCharge,
+                    take_home_amount: takeHome,
+                    guarantor_id: null,
+                    status: 'pending',
+                    disbursement_method: disburseMethod
+                }).select();
+
+                if (loanErr) throw loanErr;
+
+                // Insert Guarantor Requests
+                if (selectedGuarantors.length > 0 && loan) {
+                    const requests = selectedGuarantors.map(g => ({
+                        loan_id: loan[0].id,
+                        borrower_id: user.id,
+                        guarantor_id: g.id,
+                        amount_guaranteed: g.amount,
+                        status: 'pending'
+                    }));
+
+                    const { error: guarantorError } = await client.from('guarantor_requests').insert(requests);
+                    if (guarantorError) throw guarantorError;
+                }
+
+                alert('✅ Loan request submitted successfully!');
+                closeModal('loan-review-modal');
+                setTimeout(() => location.reload(), 1000);
+            } catch (err) {
+                alert('Error: ' + err.message);
+                btn.innerHTML = `<span>Accept & Submit</span>`;
+                btn.disabled = false;
+            }
+        }
+
+        async function searchGuarantorMembers() {
+            const query = document.getElementById('guarantor-search').value.trim().toLowerCase();
+            const resultsContainer = document.getElementById('guarantor-search-results');
+
+            if (query.length < 1) {
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const { data: members } = await client
+                    .from('profiles')
+                    // FIX: Include id_number in fetch
+                    .select('id, full_name, member_number, id_number, savings_balance, locked_guarantee_amount')
+                    .neq('id', user.id);
+
+                // Filter out already selected guarantors
+                const availableMembers = members.filter(m => !selectedGuarantors.some(g => g.id === m.id));
+
+                const filtered = members.filter(m =>
+                    (m.full_name && m.full_name.toLowerCase().includes(query)) ||
+                    (m.member_number && m.member_number.toLowerCase().includes(query)) ||
+                    (m.id_number && m.id_number.toLowerCase().includes(query)) // FIX: Search by ID Number
+                );
+
+                if (filtered.length === 0) {
+                    resultsContainer.innerHTML = '<div class="text-xs text-red-500">No members found</div>';
+                    resultsContainer.classList.remove('hidden');
+                    return;
+                }
+
+                resultsContainer.innerHTML = filtered.map(m => `
+                    <button type="button" onclick="selectGuarantor('${m.id}', '${m.full_name}', ${m.savings_balance || 0}, ${m.locked_guarantee_amount || 0})" 
+                            class="w-full text-left p-2 bg-white border border-yellow-200 rounded hover:bg-yellow-50">
+                        <p class="text-xs font-bold text-gray-900">${m.full_name}</p>
+                        <div class="flex justify-between text-[10px] text-gray-500">
+                            <span>ID: ${m.id_number || 'N/A'}</span>
+                            <span class="font-bold text-green-600">Free: KES ${Math.max(0, (m.savings_balance || 0) - (m.locked_guarantee_amount || 0)).toLocaleString()}</span>
+                        </div>
+                    </button>
+                `).join('');
+
+                resultsContainer.classList.remove('hidden');
+            } catch (err) {
+                resultsContainer.innerHTML = '<div class="text-xs text-red-500">Search error</div>';
+            }
+        }
+
+        async function selectGuarantor(memberId, memberName, savings, locked) {
+            const available = Math.max(0, savings - locked);
+
+            if (available <= 0) {
+                alert(`${memberName} has no available savings to guarantee this loan.`);
+                return;
+            }
+
+            const amountStr = prompt(`Enter guarantee amount for ${memberName}\n(Max Available: KES ${available.toLocaleString()})`);
+            if (!amountStr) return;
+
+            const amount = parseFloat(amountStr);
+            if (isNaN(amount) || amount <= 0) {
+                alert("Invalid amount");
+                return;
+            }
+            if (amount > available) {
+                alert(`Amount exceeds guarantor's available savings (KES ${available.toLocaleString()})`);
+                return;
+            }
+
+            selectedGuarantors.push({ id: memberId, name: memberName, amount: amount });
+            updateGuarantorList();
+
+            document.getElementById('guarantor-search-results').classList.add('hidden');
+            document.getElementById('guarantor-search').value = '';
+        }
+
+        function updateGuarantorList() {
+            const container = document.getElementById('selected-guarantors-list');
+            if (selectedGuarantors.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            container.innerHTML = selectedGuarantors.map((g, index) => `
+                <div class="flex justify-between items-center bg-white dark:bg-gray-700 p-2 rounded border border-green-200 dark:border-green-700">
+                    <div>
+                        <p class="text-xs font-bold text-gray-800">${g.name}</p>
+                        <p class="text-[10px] text-gray-500">Guarantees: KES ${g.amount.toLocaleString()}</p>
+                    </div>
+                    <button onclick="removeGuarantor(${index})" class="text-red-500 hover:text-red-700"><i class="ri-close-circle-line text-lg"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function removeGuarantor(index) {
+            selectedGuarantors.splice(index, 1);
+            updateGuarantorList();
+        }
+
+        function clearGuarantorSelection() {
+            selectedGuarantors = [];
+            updateGuarantorList();
+        }
+
+        // 13. DEPOSIT/WITHDRAW (Keep original implementation)
+        async function executeDeposit() {
+            const amount = document.getElementById('dep-amount').value;
+            let phone = document.getElementById('dep-phone').value;
+            const btn = document.getElementById('dep-btn');
+            const msg = document.getElementById('dep-msg');
+
+            if (!amount || amount < 10) {
+                msg.innerText = "Minimum KES 10";
+                msg.className = "text-center text-[10px] font-bold mt-4 text-red-500";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Processing...`;
+
+            phone = phone.replace(/\D/g, '');
+            if (phone.startsWith('0')) phone = phone.substring(1);
+            if (!phone.startsWith('254')) phone = '254' + phone;
+
+            if (userProfile.phone !== phone) {
+                await client.from('profiles').update({ phone: phone }).eq('id', user.id);
+                userProfile.phone = phone;
+            }
+
+            if (!user || !user.id) {
+                alert("User session invalid. Please log in again.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`https://ckcxwsorhuauxijxzihv.supabase.co/functions/v1/mpesa-push?phone=${phone}&amount=${amount}&userId=${user.id}`, {
+                    headers: { 'Authorization': 'Bearer ' + supabaseKey }
+                });
+                const data = await res.json();
+
+                if (data.ResponseCode === "0") {
+                    msg.innerText = "CHECK YOUR PHONE!";
+                    msg.className = "text-center text-[10px] font-bold mt-4 text-blue-600 animate-pulse";
+
+                    // Use the specific Transaction ID returned from backend
+                    const txId = data.db_transaction?.id;
+                    let attempts = 0;
+
+                    const interval = setInterval(async () => {
+                        attempts++;
+
+                        // Poll for THIS specific transaction to be COMPLETED
+                        const { data: tx } = await client.from('transactions')
+                            .select('status')
+                            .eq('id', txId)
+                            .single();
+
+                        // Only show success if status is COMPLETED
+                        if (tx && tx.status === 'completed') {
+                            clearInterval(interval);
+                            msg.innerText = "SUCCESS!";
+                            msg.className = "text-center text-[10px] font-bold mt-4 text-green-600";
+                            setTimeout(() => location.reload(), 1500);
+                        }
+
+                        if (attempts > 30) {
+                            clearInterval(interval);
+                            btn.disabled = false;
+                            btn.innerHTML = "Retry";
+                            msg.innerText = "Timeout";
+                            msg.className = "text-center text-[10px] font-bold mt-4 text-orange-500";
+                        }
+                    }, 2000);
+                }
+            } catch (e) {
+                btn.disabled = false;
+                btn.innerHTML = "Pay Now";
+                msg.innerText = "Error: Check connection";
+                msg.className = "text-center text-[10px] font-bold mt-4 text-red-500";
+            }
+        }
+
+        async function executeWithdraw() {
+            const amount = document.getElementById('wd-amount').value;
+            const btn = document.getElementById('wd-btn');
+            const msg = document.getElementById('wd-msg');
+
+            const currentBalance = parseFloat(userProfile.savings_balance || 0);
+            const lockedAmount = parseFloat(userProfile.locked_guarantee_amount || 0);
+            const activeLoans = parseFloat(currentLoanBalance || 0);
+            const availableBalance = Math.max(0, currentBalance - (lockedAmount + activeLoans));
+
+            if (!amount || amount < 10 || parseFloat(amount) > availableBalance) {
+                msg.innerText = parseFloat(amount) > availableBalance
+                    ? `Available: KES ${availableBalance.toLocaleString()} (Locked: ${lockedAmount.toLocaleString()}, Loans: ${activeLoans.toLocaleString()})`
+                    : "Invalid amount (Min KES 10)";
+                msg.className = "text-center text-[10px] font-bold mt-4 text-red-500";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Processing...`;
+
+            try {
+                await client.from('transactions').insert({
+                    user_id: user.id,
+                    type: 'withdrawal',
+                    amount: parseFloat(amount),
+                    mpesa_code: 'PENDING',
+                    status: 'pending'
+                });
+
+                msg.innerText = "REQUEST SENT!";
+                msg.className = "text-center text-[10px] font-bold mt-4 text-green-600";
+                btn.innerHTML = `<i class="ri-check-line"></i> Done`;
+
+                setTimeout(() => location.reload(), 1500);
+            } catch (e) {
+                btn.disabled = false;
+                btn.innerHTML = "Confirm Withdrawal";
+                msg.innerText = "Error: " + e.message;
+                msg.className = "text-center text-[10px] font-bold mt-4 text-red-500";
+            }
+        }
+
+        async function executeTransfer() {
+            const amount = parseFloat(document.getElementById('transfer-amount').value);
+            const btn = document.getElementById('transfer-btn');
+
+            if (!amount || amount < 1) {
+                alert("Invalid amount");
+                return;
+            }
+
+            if (!confirm(`Transfer KES ${amount.toLocaleString()} from Savings to Share Capital?\n\nNOTE: Share Capital cannot be withdrawn.`)) return;
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="ri-loader-4-line animate-spin"></i> Processing...`;
+
+            try {
+                const { data, error } = await client.rpc('transfer_savings_to_shares', { amount: amount });
+
+                if (error) throw error;
+                if (!data.success) throw new Error(data.message);
+
+                alert('✅ Transfer Successful! Share Capital updated.');
+                location.reload();
+            } catch (e) {
+                alert("Transfer Failed: " + e.message);
+                btn.disabled = false;
+                btn.innerHTML = `<span>Confirm Transfer</span><i class="ri-check-line"></i>`;
+            }
+        }
+
+        // 14. UI HELPERS
+        function toggleNotifications() {
+            document.getElementById('notifications-modal').classList.toggle('hidden');
+        }
+
+        function openSettings() {
+            document.getElementById('settings-modal').classList.remove('hidden');
+
+            // Populate Member Details
+            if (userProfile) {
+                // 1. Full Name
+                document.getElementById('settings-full-name').innerText = userProfile.full_name || userProfile.first_name || 'Member';
+                document.getElementById('settings-member-id').innerText = userProfile.member_number || 'ID: Pending';
+
+                // 2. Avatar
+                if (userProfile.avatar_url) {
+                    document.getElementById('settings-avatar-img').src = userProfile.avatar_url;
+                }
+
+                // 3. Joined Date
+                const joinedDate = new Date(userProfile.created_at || user.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                document.getElementById('settings-joined-date').innerText = joinedDate;
+
+                // 4. Email
+                document.getElementById('settings-email-text').innerText = user.email || 'No email';
+
+                // 5. Phone
+                document.getElementById('settings-phone-text').innerText = userProfile.phone || 'No phone number';
+
+                // 6. National ID
+                document.getElementById('settings-id-number').innerText = userProfile.id_number || 'Not set';
+
+                // 6. Location (County)
+                // Try to get county from profile or metadata
+                const county = userProfile.county || (user.user_metadata && user.user_metadata.county) || 'Unknown';
+                const country = userProfile.country || (user.user_metadata && user.user_metadata.country) || 'Kenya';
+                document.getElementById('settings-location-text').innerText = county + ', ' + country;
+            }
+
+            loadUserDocuments();
+            updateDarkModeToggleUI();
+
+            // Populate county dropdown if not already populated
+            const countySelect = document.getElementById('edit-county');
+            if (countySelect.options.length <= 1) { // Populate only once
+                Object.keys(kenyaLocations).forEach(c => {
+                    let option = document.createElement("option");
+                    option.text = c;
+                    option.value = c;
+                    countySelect.add(option);
+                });
+            }
+
+            toggleProfileEdit(false); // Ensure it starts in view mode
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        // === DOCUMENT MANAGEMENT ===
+        function toggleProfileEdit(isEditing) {
+            // Toggle visibility of view/edit elements
+            document.getElementById('settings-phone-text').classList.toggle('hidden', isEditing);
+            document.getElementById('edit-phone').classList.toggle('hidden', !isEditing);
+
+            document.getElementById('settings-location-text').classList.toggle('hidden', isEditing);
+            document.getElementById('edit-county').classList.toggle('hidden', !isEditing);
+
+            document.getElementById('edit-profile-btn').classList.toggle('hidden', isEditing);
+            document.getElementById('edit-profile-actions').classList.toggle('hidden', !isEditing);
+
+            if (isEditing) {
+                // Populate inputs with current data
+                document.getElementById('edit-phone').value = userProfile.phone || '';
+                document.getElementById('edit-county').value = userProfile.county || '';
+            }
+        }
+
+        async function saveProfileChanges() {
+            const newPhone = document.getElementById('edit-phone').value.trim();
+            const newCounty = document.getElementById('edit-county').value;
+
+            const updates = {};
+            if (newPhone !== (userProfile.phone || '')) {
+                updates.phone = newPhone;
+            }
+            if (newCounty !== (userProfile.county || '')) {
+                updates.county = newCounty;
+            }
+
+            if (Object.keys(updates).length === 0) {
+                toggleProfileEdit(false); // No changes, just exit edit mode
+                return;
+            }
+
+            try {
+                const { error } = await client.from('profiles').update(updates).eq('id', user.id);
+                if (error) throw error;
+
+                alert('✅ Profile updated successfully!');
+
+                Object.assign(userProfile, updates);
+                openSettings(); // Re-populate the settings view with new data
+
+            } catch (err) {
+                alert('Error updating profile: ' + err.message);
+            }
+        }
+
+        async function loadUserDocuments() {
+            const { data: { user } } = await client.auth.getUser();
+            if (!user) return;
+
+            try {
+                const { data: docs } = await client.from('documents').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+                const container = document.getElementById('user-docs-list');
+
+                if (!docs || docs.length === 0) {
+                    container.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400">No documents uploaded yet</p>';
+                    return;
+                }
+
+                container.innerHTML = docs.map(doc => {
+                    const isImage = doc.url && (doc.url.includes('.jpg') || doc.url.includes('.png') || doc.url.includes('.jpeg'));
+                    const verified = doc.verified ? '✅ Verified' : '⏳ Pending';
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-gray-900 truncate">${doc.type}</p>
+                                <p class="text-[10px] text-gray-500">${new Date(doc.created_at).toLocaleDateString()} • ${verified}</p>
+                            </div>
+                            <div class="flex items-center gap-2 ml-2">
+                                <a href="${doc.url}" target="_blank" class="text-[10px] text-indigo-600 hover:underline">View</a>
+                                <button onclick="deleteDocument('${doc.id}')" class="text-[10px] text-red-600 hover:underline">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error('Load documents error:', e);
+            }
+        }
+
+        async function uploadDocument(evt) {
+            const { data: { user } } = await client.auth.getUser();
+            if (!user) {
+                alert('Please log in first');
+                return;
+            }
+
+            const fileInput = document.getElementById('doc-file-input');
+            const docType = document.getElementById('doc-upload-type').value;
+            const file = fileInput.files?.[0];
+
+            if (!file) {
+                alert('Please select a file');
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                alert('File must be smaller than 5MB');
+                return;
+            }
+
+            const btn = evt?.target || document.querySelector('[onclick*="uploadDocument"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Uploading...';
+            }
+
+            try {
+                // Upload to storage
+                const path = `${user.id}/${Date.now()}_${file.name}`;
+                const { data: uploadData, error: uploadErr } = await client.storage.from('id-docs').upload(path, file, { cacheControl: '3600', upsert: false });
+
+                if (uploadErr) {
+                    throw new Error('Upload failed: ' + uploadErr.message);
+                }
+
+                // Get public URL
+                const { data: publicData } = await client.storage.from('id-docs').getPublicUrl(path);
+                const publicUrl = publicData?.publicUrl || null;
+
+                // Insert document record
+                const { error: docErr } = await client.from('documents').insert({
+                    user_id: user.id,
+                    type: docType,
+                    file_name: file.name,
+                    url: publicUrl,
+                    storage_path: path
+                });
+
+                if (docErr) {
+                    throw new Error('Failed to save document: ' + docErr.message);
+                }
+
+                alert('✅ Document uploaded successfully!');
+                fileInput.value = '';
+                loadUserDocuments();
+            } catch (e) {
+                alert('Error uploading document: ' + e.message);
+                console.error('Upload error:', e);
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Upload Document';
+                }
+            }
+        }
+
+        // === AVATAR UPLOAD ===
+        async function uploadAvatar(evt) {
+            const file = evt.target.files?.[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Image must be smaller than 2MB');
+                return;
+            }
+
+            // Show loading state on image
+            const img = document.getElementById('settings-avatar-img');
+            const originalSrc = img.src;
+            img.style.opacity = '0.5';
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const path = `avatars/${user.id}_${Date.now()}.${fileExt}`;
+                // Upload to 'id-docs' bucket but in 'avatars' folder
+                const { error: uploadErr } = await client.storage.from('id-docs').upload(path, file, { upsert: true });
+                if (uploadErr) throw uploadErr;
+
+                const { data: { publicUrl } } = client.storage.from('id-docs').getPublicUrl(path);
+
+                // Update profile
+                const { error: updateErr } = await client.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
+                if (updateErr) throw updateErr;
+
+                // Update UI
+                img.src = publicUrl;
+                const headerAvatar = document.getElementById('header-avatar');
+                if (headerAvatar) headerAvatar.src = publicUrl;
+                userProfile.avatar_url = publicUrl; // Update local cache
+                alert('✅ Profile photo updated!');
+            } catch (e) {
+                console.error(e);
+                alert('Error updating photo: ' + e.message);
+                img.src = originalSrc;
+            } finally {
+                img.style.opacity = '1';
+            }
+        }
+
+        async function handleChangePassword(event) {
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-new-password').value;
+            const msgEl = document.getElementById('password-change-msg');
+            const btn = event.target;
+
+            // 1. Validation
+            if (!newPassword || newPassword.length < 6) {
+                msgEl.innerText = 'Password must be at least 6 characters.';
+                msgEl.className = 'text-center text-xs font-medium h-4 text-red-500';
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                msgEl.innerText = 'Passwords do not match.';
+                msgEl.className = 'text-center text-xs font-medium h-4 text-red-500';
+                return;
+            }
+
+            msgEl.innerText = 'Updating...';
+            msgEl.className = 'text-center text-xs font-medium h-4 text-gray-500';
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+
+            // 2. Call Supabase auth update
+            const { error } = await client.auth.updateUser({ password: newPassword });
+
+            if (error) {
+                msgEl.innerText = 'Error: ' + error.message;
+                msgEl.className = 'text-center text-xs font-medium h-4 text-red-500';
+            } else {
+                msgEl.innerText = '✅ Password updated successfully!';
+                msgEl.className = 'text-center text-xs font-medium h-4 text-green-600';
+                document.getElementById('new-password').value = '';
+                document.getElementById('confirm-new-password').value = '';
+            }
+            btn.disabled = false;
+            btn.textContent = 'Update Password';
+        }
+
+        async function deleteDocument(docId) {
+            if (!confirm('Delete this document?')) return;
+
+            try {
+                // Get document to find file path
+                const { data: doc } = await client.from('documents').select('storage_path').eq('id', docId).single();
+
+                if (doc?.storage_path) {
+                    // Delete from storage
+                    await client.storage.from('id-docs').remove([doc.storage_path]);
+                }
+
+                // Delete record from DB
+                await client.from('documents').delete().eq('id', docId);
+
+                alert('Document deleted');
+                loadUserDocuments();
+            } catch (e) {
+                alert('Error deleting document: ' + e.message);
+            }
+        }
+
+        function toggleBalanceVisibility() {
+            togglePrivacyMode();
+        }
+
+        function openRecentTransactions() {
+            document.getElementById('recent-modal').classList.remove('hidden');
+            loadAllTransactions();
+        }
+
+        function closeRecentTransactions() {
+            document.getElementById('recent-modal').classList.add('hidden');
+        }
+
+        async function logout() {
+            await client.auth.signOut();
+            window.location.href = 'index.html';
+        }
+
+        function openTermsModal() {
+            document.getElementById('terms-modal').classList.remove('hidden');
+        }
+
+        function closeTermsModal() {
+            document.getElementById('terms-modal').classList.add('hidden');
+        }
+
+        function contactSupport() {
+            const phone = "254714767240";
+            const name = userProfile?.full_name || "Member";
+            const message = encodeURIComponent(`Hello Support, I am ${name}. I need assistance with Juvinal Pay.`);
+            window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+        }
+    </script>
+</body>
+
+</html>

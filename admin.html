@@ -1,0 +1,2321 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juvinal Pay - Admin Workspace</title>
+    <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        .hidden-section {
+            display: none;
+        }
+
+        @keyframes blink {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .animate-blink {
+            animation: blink 1s infinite;
+        }
+
+        /* Cultural Background Theme Classes */
+        .cultural-bg-dashboard {
+            background-color: #f3f4f6;
+            background-image: url('dashboard-bg.svg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: multiply;
+        }
+
+        .dark .cultural-bg-dashboard,
+        .cultural-bg-dashboard.dark {
+            background-color: #111827;
+            background-blend-mode: overlay;
+        }
+
+        .cultural-bg-card {
+            background-image: linear-gradient(to bottom right, rgba(79, 70, 229, 0.95), rgba(67, 56, 202, 0.98)), url('card-bg.svg');
+            background-size: cover;
+            background-position: right center;
+            background-blend-mode: overlay;
+        }
+
+        .cultural-bg-modal {
+            background-color: #ffffff;
+            background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.98)), url('modal-bg.svg');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: normal;
+        }
+
+        .dark .cultural-bg-modal,
+        .cultural-bg-modal.dark {
+            background-color: #1f2937;
+            background-image: linear-gradient(to bottom, rgba(31, 41, 55, 0.95), rgba(31, 41, 55, 0.98)), url('modal-bg.svg');
+            background-blend-mode: normal;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 font-sans antialiased dark cultural-bg-dashboard">
+
+    <div class="flex h-screen overflow-hidden">
+
+        <aside class="w-64 bg-gray-800 border-r border-gray-700 hidden md:flex flex-col">
+            <div class="h-16 flex items-center px-6 border-b border-gray-700">
+                <h1 class="text-xl font-bold tracking-wider text-white">Juvinal<span class="text-purple-500">Pay</span>
+                </h1>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard"
+                    class="w-full flex items-center gap-3 px-4 py-3 bg-purple-600 text-white rounded-xl shadow-lg transition-all">
+                    <i class="ri-dashboard-3-line"></i> <span class="font-medium">Financial HQ</span>
+                </button>
+                <button onclick="switchTab('members')" id="nav-members"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-team-line"></i> <span class="font-medium">Member Capital</span>
+                </button>
+                <button onclick="switchTab('credits')" id="nav-credits"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-hand-coin-line"></i> <span class="font-medium">Credit Portfolio</span>
+                </button>
+                <button onclick="switchTab('withdrawals')" id="nav-withdrawals"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-bank-card-line"></i> <span class="font-medium">Withdrawal Queue</span>
+                </button>
+                <button onclick="switchTab('loans')" id="nav-loans"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-hand-coin-line"></i> <span class="font-medium">Loan Approvals</span>
+                </button>
+                <button onclick="switchTab('guarantees')" id="nav-guarantees"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-shield-check-line"></i> <span class="font-medium">Guarantees</span>
+                </button>
+                <button onclick="switchTab('transactions')" id="nav-transactions"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-bank-line"></i> <span class="font-medium">Transaction Log</span>
+                </button>
+                <button onclick="switchTab('locations')" id="nav-locations"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-map-pin-line"></i> <span class="font-medium">Manage Locations</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-reports"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:bg-gray-700 rounded-xl transition-all">
+                    <i class="ri-bar-chart-grouped-line"></i> <span class="font-medium">Reports & Analytics</span>
+                </button>
+            </nav>
+            <div class="p-4 border-t border-gray-700">
+                <button onclick="logout()"
+                    class="flex items-center gap-2 text-red-400 hover:text-red-300 transition-colors">
+                    <i class="ri-logout-box-line"></i> <span>Log Out</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="h-16 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-8">
+                <h2 id="page-title" class="text-lg font-semibold text-gray-200">Financial Command Center</h2>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                        <span class="text-xs font-mono text-green-400">ADMIN ACTIVE</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-8">
+
+                <div id="view-dashboard" class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="space-y-6">
+                            <div
+                                class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
+                                <p class="text-gray-400 text-xs font-bold uppercase mb-2">Total Liquidity</p>
+                                <h3 id="total-liquidity" class="text-3xl font-bold text-white">Loading...</h3>
+                            </div>
+                            <div
+                                class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-10"><i
+                                        class="ri-vip-crown-2-fill text-6xl text-yellow-500"></i></div>
+                                <p class="text-gray-400 text-xs font-bold uppercase mb-2">Registration Fees</p>
+                                <h3 id="total-reg-fees" class="text-3xl font-bold text-yellow-400">Loading...</h3>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl">
+                                <p class="text-gray-400 text-xs font-bold uppercase mb-2">Active Loans</p>
+                                <h3 id="total-loans" class="text-3xl font-bold text-purple-400">Loading...</h3>
+                            </div>
+                            <div
+                                class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-10"><i
+                                        class="ri-shield-keyhole-fill text-6xl text-red-500"></i></div>
+                                <p class="text-gray-400 text-xs font-bold uppercase mb-2">Locked Guarantees</p>
+                                <h3 id="total-locked" class="text-3xl font-bold text-red-400">Loading...</h3>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl">
+                            <p class="text-gray-400 text-xs font-bold uppercase mb-2">Share Capital</p>
+                            <h3 id="share-capital" class="text-3xl font-bold text-green-400">Loading...</h3>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl">
+                            <p class="text-gray-400 text-xs font-bold uppercase mb-2">Account (Paybill)</p>
+                            <h3 id="paybill-balance" class="text-3xl font-bold text-yellow-400">Loading...</h3>
+                        </div>
+                    </div>
+
+                    <!-- Financial Chart -->
+                    <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-gray-400 text-xs font-bold uppercase">Transaction Trends</h3>
+                            <select id="chart-range" onchange="loadFinancialChart(this.value)"
+                                class="bg-gray-800 text-gray-300 text-xs rounded-lg px-3 py-1.5 border border-gray-600 outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-colors cursor-pointer">
+                                <option value="hourly">Hourly (24h)</option>
+                                <option value="daily">Daily (30d)</option>
+                                <option value="monthly" selected>Monthly (12m)</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="relative h-80 w-full">
+                            <canvas id="financialChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-members" class="hidden-section space-y-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Member Capital Directory</h2>
+                        <div class="relative">
+                            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" id="member-search" onkeyup="filterMembers()"
+                                placeholder="Search Identity or Name..."
+                                class="bg-gray-800 pl-10 pr-4 py-2 border border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none text-white">
+                        </div>
+                    </div>
+
+                    <!-- Tabs for Members -->
+                    <div class="flex space-x-4 border-b border-gray-700 pb-1">
+                        <button onclick="switchMemberView('pending')" id="tab-members-pending"
+                            class="px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-colors text-gray-400 hover:bg-gray-800 border-b-2 border-transparent">
+                            <span>Pending Approvals</span>
+                            <span id="badge-members-pending"
+                                class="bg-yellow-500 text-black text-[10px] px-1.5 py-0.5 rounded-full font-extrabold hidden">0</span>
+                        </button>
+                        <button onclick="switchMemberView('active')" id="tab-members-active"
+                            class="px-4 py-2 rounded-t-lg text-sm font-bold transition-colors bg-gray-800 text-white border-b-2 border-purple-500">
+                            Active Members
+                        </button>
+                    </div>
+
+                    <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
+                        <table class="w-full text-left border-collapse text-sm text-gray-300">
+                            <thead id="members-table-head"
+                                class="bg-gray-900/50 text-gray-500 text-[10px] uppercase tracking-wider font-bold">
+                                <!-- Headers injected via JS -->
+                            </thead>
+                            <tbody id="member-list" class="divide-y divide-gray-700">
+                                <tr>
+                                    <td colspan="5" class="p-10 text-center">Loading members...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-credits" class="hidden-section space-y-6">
+                    <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
+                        <div class="p-6 border-b border-gray-700">
+                            <h3 class="font-bold text-white">Active Debt Collection & Repayment Status</h3>
+                        </div>
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-900/50 text-xs uppercase text-gray-500">
+                                <tr>
+                                    <th class="p-4">Borrower</th>
+                                    <th class="p-4">Principal</th>
+                                    <th class="p-4">Interest (10%)</th>
+                                    <th class="p-4 text-red-400 font-bold">Total Due</th>
+                                    <th class="p-4">Total Paid</th>
+                                    <th class="p-4 text-orange-400 font-bold">Remaining</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Issued</th>
+                                </tr>
+                            </thead>
+                            <tbody id="active-loan-list" class="divide-y divide-gray-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-withdrawals" class="hidden-section space-y-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Pending Withdrawal Requests</h2>
+                        <span id="withdrawal-count"
+                            class="bg-orange-900 text-orange-200 text-xs px-3 py-1 rounded-lg font-bold">Loading...</span>
+                    </div>
+                    <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-900/50 text-xs uppercase text-gray-500">
+                                <tr>
+                                    <th class="p-4">Member</th>
+                                    <th class="p-4">Phone</th>
+                                    <th class="p-4 text-right">Amount</th>
+                                    <th class="p-4">Date Requested</th>
+                                    <th class="p-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawal-list" class="divide-y divide-gray-700">
+                                <tr>
+                                    <td colspan="5" class="p-6 text-center text-gray-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="view-loans" class="hidden-section space-y-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Pending Loan Approvals</h2>
+                        <span id="loan-count"
+                            class="bg-indigo-900 text-indigo-200 text-xs px-3 py-1 rounded-lg font-bold">Loading...</span>
+                    </div>
+                    <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-900/50 text-xs uppercase text-gray-500">
+                                <tr>
+                                    <th class="p-4">Borrower</th>
+                                    <th class="p-4 text-right">Amount</th>
+                                    <th class="p-4">Guarantor</th>
+                                    <th class="p-4">Requested</th>
+                                    <th class="p-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loan-list" class="divide-y divide-gray-700">
+                                <tr>
+                                    <td colspan="5" class="p-6 text-center text-gray-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- GUARANTEES VIEW -->
+                <div id="view-guarantees" class="hidden-section space-y-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Active Guarantees</h2>
+                        <div class="flex items-center gap-4">
+                            <span id="guarantee-count"
+                                class="bg-blue-900 text-blue-200 text-xs px-3 py-1 rounded-lg font-bold">Loading...</span>
+                            <div class="relative">
+                                <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="guarantee-search" onkeyup="filterGuarantees()"
+                                    placeholder="Search guarantor..."
+                                    class="bg-gray-800 pl-10 pr-4 py-2 border border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none text-white">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-900/50 text-xs uppercase text-gray-500">
+                                <tr>
+                                    <th class="p-4">Guarantor</th>
+                                    <th class="p-4">Borrower</th>
+                                    <th class="p-4 text-right">Guaranteed Amount</th>
+                                    <th class="p-4 text-right">Loan Amount</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="guarantees-list" class="divide-y divide-gray-700">
+                                <tr>
+                                    <td colspan="6" class="p-6 text-center text-gray-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TRANSACTIONS VIEW -->
+                <div id="view-transactions" class="hidden-section space-y-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Complete Transaction Audit Trail</h2>
+                        <div class="flex gap-3">
+                            <select id="tx-filter" onchange="filterTransactions()"
+                                class="bg-gray-800 px-4 py-2 border border-gray-700 rounded-xl text-sm text-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                                <option value="all">All Types</option>
+                                <option value="deposit">Deposits</option>
+                                <option value="withdrawal">Withdrawals</option>
+                                <option value="repayment">Repayments</option>
+                                <option value="loan_disbursement">Loan Disbursements</option>
+                                <option value="registration_fee">Registration Fees</option>
+                                <option value="share_transfer">Share Transfers</option>
+                            </select>
+                            <input type="text" id="tx-search" onkeyup="filterTransactions()"
+                                placeholder="Search member or receipt..."
+                                class="bg-gray-800 px-4 py-2 border border-gray-700 rounded-xl text-sm text-gray-300 focus:ring-2 focus:ring-purple-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 rounded-2xl border border-gray-700 shadow-xl overflow-hidden">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="bg-gray-900/50 text-xs uppercase text-gray-500">
+                                <tr>
+                                    <th class="p-4">Member</th>
+                                    <th class="p-4">J-Number</th>
+                                    <th class="p-4">Type</th>
+                                    <th class="p-4 text-right">Amount (KES)</th>
+                                    <th class="p-4">M-Pesa Code</th>
+                                    <th class="p-4">Date & Time</th>
+                                    <th class="p-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-list" class="divide-y divide-gray-700">
+                                <tr>
+                                    <td colspan="7" class="p-6 text-center text-gray-500">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- LOCATIONS VIEW -->
+                <div id="view-locations" class="hidden-section space-y-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Geographic Data Management</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 h-[70vh]">
+                        <!-- Countries -->
+                        <div class="bg-gray-800 rounded-xl border border-gray-700 flex flex-col shadow-lg">
+                            <div class="p-3 border-b border-gray-700 font-bold text-purple-400 flex justify-between">
+                                <span>1. Countries</span> <i class="ri-global-line"></i>
+                            </div>
+                            <div id="list-countries" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                            <div class="p-2 border-t border-gray-700 flex gap-1">
+                                <input id="new-country"
+                                    class="bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm w-full text-white outline-none focus:border-purple-500"
+                                    placeholder="Add Country">
+                                <button onclick="addLocation('country')"
+                                    class="bg-purple-600 hover:bg-purple-500 text-white px-2 rounded"><i
+                                        class="ri-add-line"></i></button>
+                            </div>
+                        </div>
+                        <!-- Counties -->
+                        <div class="bg-gray-800 rounded-xl border border-gray-700 flex flex-col shadow-lg opacity-50 transition-opacity"
+                            id="col-counties">
+                            <div class="p-3 border-b border-gray-700 font-bold text-blue-400 flex justify-between">
+                                <span>2. Counties</span> <i class="ri-map-2-line"></i>
+                            </div>
+                            <div id="list-counties" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                            <div class="p-2 border-t border-gray-700 flex gap-1">
+                                <input id="new-county" disabled
+                                    class="bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm w-full text-white outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    placeholder="Select Country First">
+                                <button id="btn-add-county" disabled onclick="addLocation('county')"
+                                    class="bg-blue-600 hover:bg-blue-500 text-white px-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"><i
+                                        class="ri-add-line"></i></button>
+                            </div>
+                        </div>
+                        <!-- Sub-Counties -->
+                        <div class="bg-gray-800 rounded-xl border border-gray-700 flex flex-col shadow-lg opacity-50 transition-opacity"
+                            id="col-subcounties">
+                            <div class="p-3 border-b border-gray-700 font-bold text-green-400 flex justify-between">
+                                <span>3. Sub-Counties</span> <i class="ri-community-line"></i>
+                            </div>
+                            <div id="list-subcounties" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                            <div class="p-2 border-t border-gray-700 flex gap-1">
+                                <input id="new-subcounty" disabled
+                                    class="bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm w-full text-white outline-none focus:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    placeholder="Select County First">
+                                <button id="btn-add-subcounty" disabled onclick="addLocation('sub_county')"
+                                    class="bg-green-600 hover:bg-green-500 text-white px-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"><i
+                                        class="ri-add-line"></i></button>
+                            </div>
+                        </div>
+                        <!-- Wards -->
+                        <div class="bg-gray-800 rounded-xl border border-gray-700 flex flex-col shadow-lg opacity-50 transition-opacity"
+                            id="col-wards">
+                            <div class="p-3 border-b border-gray-700 font-bold text-orange-400 flex justify-between">
+                                <span>4. Wards</span> <i class="ri-home-smile-line"></i>
+                            </div>
+                            <div id="list-wards" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
+                            <div class="p-2 border-t border-gray-700 flex gap-1">
+                                <input id="new-ward" disabled
+                                    class="bg-gray-900 border border-gray-600 rounded px-2 py-1 text-sm w-full text-white outline-none focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    placeholder="Select Sub-County First">
+                                <button id="btn-add-ward" disabled onclick="addLocation('ward')"
+                                    class="bg-orange-600 hover:bg-orange-500 text-white px-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"><i
+                                        class="ri-add-line"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- REPORTS VIEW -->
+                <div id="view-reports" class="hidden-section space-y-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Member Demographics & Analytics</h2>
+                        <button onclick="loadReports()"
+                            class="bg-gray-800 hover:bg-gray-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors border border-gray-700">
+                            <i class="ri-refresh-line"></i> Refresh Data
+                        </button>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div
+                            class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10"><i
+                                    class="ri-team-fill text-6xl text-white"></i></div>
+                            <p class="text-gray-400 text-xs font-bold uppercase mb-2">Total Members</p>
+                            <h3 id="report-total-members" class="text-3xl font-bold text-white">0</h3>
+                        </div>
+                        <div
+                            class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10"><i
+                                    class="ri-user-follow-line text-6xl text-green-500"></i></div>
+                            <p class="text-gray-400 text-xs font-bold uppercase mb-2">Active Members</p>
+                            <h3 id="report-active-members" class="text-3xl font-bold text-green-400">0</h3>
+                        </div>
+                        <div
+                            class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10"><i
+                                    class="ri-time-line text-6xl text-yellow-500"></i></div>
+                            <p class="text-gray-400 text-xs font-bold uppercase mb-2">Pending Approval</p>
+                            <h3 id="report-pending-members" class="text-3xl font-bold text-yellow-400">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl flex flex-col h-96">
+                            <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2"><i
+                                    class="ri-map-2-line text-purple-500"></i> Members by County</h3>
+                            <div class="flex-1 relative w-full h-full">
+                                <canvas id="countyChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl flex flex-col h-96">
+                            <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2"><i
+                                    class="ri-global-line text-blue-500"></i> Members by Country</h3>
+                            <div class="flex-1 relative w-full h-full flex justify-center">
+                                <canvas id="countryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 shadow-xl flex flex-col h-96">
+                        <h3 class="text-sm font-bold text-gray-300 mb-4 flex items-center gap-2"><i
+                                class="ri-line-chart-line text-green-500"></i> Monthly Member Growth</h3>
+                        <div class="flex-1 relative w-full h-full">
+                            <canvas id="growthChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- KYC modal (moved into DOM so JS can find it) -->
+    <div id="kyc-modal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh] cultural-bg-modal">
+            <div id="kyc-content" class="flex-1 overflow-y-auto p-0">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG
+        const supabaseUrl = 'https://ckcxwsorhuauxijxzihv.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrY3h3c29yaHVhdXhpanh6aWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMzUyMjYsImV4cCI6MjA4NjkxMTIyNn0.l0tBqVbtzXWwVZCusz7BqKof4Eo8CAi88AEvV2uapO4'
+        const client = supabase.createClient(supabaseUrl, supabaseKey)
+
+        // --- INIT ---
+        async function init() {
+            try {
+                const { data: { user } } = await client.auth.getUser();
+                if (!user) {
+                    console.log("No user found, redirecting...");
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Verify Admin Status
+                const { data: profile } = await client.from('profiles').select('is_admin').eq('id', user.id).single();
+
+                if (!profile || profile.is_admin !== true) {
+                    console.warn("Unauthorized Access Attempt Detected. Redirecting to Member Dashboard.");
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
+
+                console.log("Admin user authenticated:", user.id);
+                loadDashboard();
+            } catch (err) {
+                console.error("Init error:", err);
+                alert("Init error: " + err.message);
+            }
+        }
+
+        // --- NAVIGATION TABS ---
+        function switchTab(tabName) {
+            ['dashboard', 'members', 'credits', 'withdrawals', 'loans', 'guarantees', 'transactions', 'locations', 'reports'].forEach(t => {
+                document.getElementById('view-' + t).classList.add('hidden-section');
+                document.getElementById('nav-' + t).classList.remove('bg-purple-600', 'text-white');
+                document.getElementById('nav-' + t).classList.add('text-gray-400', 'hover:bg-gray-700');
+            });
+
+            document.getElementById('view-' + tabName).classList.remove('hidden-section');
+            document.getElementById('nav-' + tabName).classList.add('bg-purple-600', 'text-white');
+            document.getElementById('nav-' + tabName).classList.remove('text-gray-400', 'hover:bg-gray-700');
+
+            if (tabName === 'dashboard') loadDashboard();
+            if (tabName === 'members') loadMemberCapital();
+            if (tabName === 'credits') loadCredits();
+            if (tabName === 'withdrawals') loadWithdrawals();
+            if (tabName === 'loans') loadLoanApprovals();
+            if (tabName === 'guarantees') loadGuarantees();
+            if (tabName === 'transactions') loadTransactionsView();
+            if (tabName === 'locations') loadCountries();
+            if (tabName === 'reports') loadReports();
+        }
+
+        // --- DASHBOARD LOGIC ---
+        async function loadDashboard() {
+            try {
+                // Fetch financial overview view for aggregated metrics
+                const { data: overview } = await client.from('financial_overview').select('*').maybeSingle();
+                const totalCash = overview?.total_liquidity || 0;
+                const totalUncollected = overview?.total_uncollected_loans || 0;
+                const totalShare = overview?.total_share_capital || 0;
+                const totalRegFees = overview?.total_registration_fees || 0;
+                const paybillBalance = overview?.paybill_balance || 0;
+
+                document.getElementById('total-liquidity').innerText = "KES " + Number(totalCash).toLocaleString();
+                document.getElementById('total-loans').innerText = "KES " + Number(totalUncollected).toLocaleString();
+                document.getElementById('share-capital').innerText = "KES " + Number(totalShare).toLocaleString();
+                document.getElementById('total-reg-fees').innerText = "KES " + Number(totalRegFees).toLocaleString();
+                if (document.getElementById('paybill-balance')) document.getElementById('paybill-balance').innerText = "KES " + Number(paybillBalance).toLocaleString();
+
+                const { data: activeLoans, error: activeError } = await client.from('loans').select('amount').eq('status', 'active');
+                console.log('ACTIVE LOANS (status=active):', activeLoans);
+                console.log('Active loans error:', activeError);
+                const totalLent = activeLoans ? activeLoans.reduce((sum, l) => sum + l.amount, 0) : 0;
+                document.getElementById('total-loans').innerText = "KES " + totalLent.toLocaleString();
+
+                // Calculate Total Locked Guarantees
+                const { data: profiles } = await client.from('profiles').select('locked_guarantee_amount');
+                const totalLocked = profiles ? profiles.reduce((sum, p) => sum + (p.locked_guarantee_amount || 0), 0) : 0;
+                document.getElementById('total-locked').innerText = "KES " + totalLocked.toLocaleString();
+
+                loadFinancialChart();
+
+            } catch (err) {
+                console.error("Dashboard load error:", err);
+                alert("Dashboard load error: " + err.message);
+            }
+        }
+
+        async function loadFinancialChart(range = 'monthly') {
+            try {
+                let startDate = new Date();
+
+                if (range === 'hourly') {
+                    startDate.setTime(startDate.getTime() - (24 * 60 * 60 * 1000));
+                } else if (range === 'daily') {
+                    startDate.setDate(startDate.getDate() - 30);
+                } else if (range === 'monthly') {
+                    startDate.setFullYear(startDate.getFullYear() - 1);
+                } else if (range === 'yearly') {
+                    startDate = new Date(0); // All time
+                }
+
+                // Fetch transactions
+                const { data: txs } = await client
+                    .from('transactions')
+                    .select('amount, type, created_at')
+                    .gte('created_at', startDate.toISOString())
+                    .order('created_at', { ascending: true });
+
+                if (!txs) return;
+
+                const groupedData = {};
+
+                txs.forEach(tx => {
+                    const d = new Date(tx.created_at);
+                    let key;
+
+                    if (range === 'hourly') {
+                        key = d.toLocaleString('en-US', { weekday: 'short', hour: 'numeric', hour12: true });
+                    } else if (range === 'daily') {
+                        key = d.toLocaleString('default', { month: 'short', day: 'numeric' });
+                    } else if (range === 'monthly') {
+                        key = d.toLocaleString('default', { month: 'short', year: '2-digit' });
+                    } else if (range === 'yearly') {
+                        key = d.getFullYear().toString();
+                    }
+
+                    if (!groupedData[key]) groupedData[key] = { deposit: 0, withdrawal: 0, loan: 0, repayment: 0 };
+
+                    if (tx.type === 'deposit') groupedData[key].deposit += tx.amount;
+                    if (tx.type === 'withdrawal') groupedData[key].withdrawal += tx.amount;
+                    if (tx.type === 'loan_disbursement') groupedData[key].loan += tx.amount;
+                    if (tx.type === 'repayment') groupedData[key].repayment += tx.amount;
+                });
+
+                const labels = Object.keys(groupedData);
+                const depositData = labels.map(k => groupedData[k].deposit);
+                const withdrawalData = labels.map(k => groupedData[k].withdrawal);
+                const loanData = labels.map(k => groupedData[k].loan);
+                const repaymentData = labels.map(k => groupedData[k].repayment);
+
+                const ctx = document.getElementById('financialChart').getContext('2d');
+
+                if (financialChartInstance) financialChartInstance.destroy();
+
+                financialChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Deposits',
+                                data: depositData,
+                                backgroundColor: '#10b981', // Green-500
+                                borderRadius: 2,
+                                barThickness: range === 'hourly' ? 12 : 6,
+                            },
+                            {
+                                label: 'Withdrawals',
+                                data: withdrawalData,
+                                backgroundColor: '#ef4444', // Red-500
+                                borderRadius: 2,
+                                barThickness: range === 'hourly' ? 12 : 6,
+                            },
+                            {
+                                label: 'Loan Disbursements',
+                                data: loanData,
+                                backgroundColor: '#8b5cf6', // Purple-500
+                                borderRadius: 2,
+                                barThickness: range === 'hourly' ? 12 : 6,
+                            },
+                            {
+                                label: 'Repayments',
+                                data: repaymentData,
+                                backgroundColor: '#3b82f6', // Blue-500
+                                borderRadius: 2,
+                                barThickness: range === 'hourly' ? 12 : 6,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#9ca3af', font: { size: 11 }, boxWidth: 10, usePointStyle: true }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#374151', drawBorder: false },
+                                ticks: { color: '#9ca3af', font: { size: 10 }, callback: (val) => 'KES ' + val.toLocaleString() },
+                                border: { display: false }
+                            },
+                            x: {
+                                grid: { display: false, drawBorder: false },
+                                ticks: { color: '#9ca3af', font: { size: 10 }, maxRotation: 45, minRotation: 0 },
+                                border: { display: false }
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        // Spacing settings for clustered bars
+                        categoryPercentage: 0.5, // Noticeable spacing between groups (months)
+                        barPercentage: 0.8       // Small inner spacing between bars
+                    }
+                });
+            } catch (err) {
+                console.error("Chart error:", err);
+            }
+        }
+
+        // --- LOAN APPROVALS ---
+        async function loadLoanApprovals() {
+            try {
+                const { data: loans, error: queryError } = await client
+                    .from('loans')
+                    .select('*')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false });
+
+                console.log('===== LOAN APPROVALS DEBUG =====');
+                console.log('Query error:', queryError);
+                console.log('Pending loans fetched:', loans);
+                if (loans) {
+                    console.log('Number of pending loans:', loans.length);
+                    console.log('Loan details:', loans.map(l => ({ id: l.id, borrower_id: l.borrower_id, amount: l.amount, status: l.status })));
+                }
+
+                const list = document.getElementById('loan-list');
+                document.getElementById('loan-count').innerText = (loans ? loans.length : 0) + ' Pending';
+                list.innerHTML = '';
+
+                if (loans && loans.length > 0) {
+                    for (const loan of loans) {
+                        console.log('Processing loan:', loan.id, 'borrower:', loan.borrower_id);
+                        const { data: borrower, error: borrowerError } = await client.from('profiles').select('full_name, phone').eq('id', loan.borrower_id).single();
+                        console.log('Borrower data:', borrower, 'error:', borrowerError);
+
+                        // Fetch Guarantor Requests (Pending/Declined)
+                        const { data: pendingGuarantors } = await client
+                            .from('guarantor_requests')
+                            .select('amount_guaranteed, status, guarantor:profiles!guarantor_id(full_name)')
+                            .eq('loan_id', loan.id)
+                            .neq('status', 'accepted'); // accepted ones moved to guarantees
+
+                        // Fetch Accepted Guarantees (Locked)
+                        const { data: acceptedGuarantees } = await client
+                            .from('guarantees')
+                            .select('amount, status, guarantor:profiles!guarantor_id(full_name)')
+                            .eq('loan_id', loan.id);
+
+                        let combinedGuarantors = [];
+                        if (pendingGuarantors) {
+                            combinedGuarantors = combinedGuarantors.concat(pendingGuarantors.map(g => ({
+                                name: g.guarantor?.full_name || 'Unknown',
+                                status: g.status,
+                                amount: g.amount_guaranteed
+                            })));
+                        }
+                        if (acceptedGuarantees) {
+                            combinedGuarantors = combinedGuarantors.concat(acceptedGuarantees.map(g => ({
+                                name: g.guarantor?.full_name || 'Unknown',
+                                status: 'accepted', // map locked/released to accepted context here
+                                amount: g.amount
+                            })));
+                        }
+
+                        let guarantorHtml = '<span class="text-gray-500">None</span>';
+                        let allAccepted = true;
+
+                        if (combinedGuarantors.length > 0) {
+                            guarantorHtml = combinedGuarantors.map(g => {
+                                const isAccepted = g.status === 'accepted' || g.status === 'locked';
+                                const color = isAccepted ? 'text-green-400' : g.status === 'declined' ? 'text-red-400' : 'text-yellow-400';
+                                if (!isAccepted) allAccepted = false;
+                                return `<div class="text-[10px]"><span class="font-bold text-gray-300">${g.name}:</span> <span class="${color}">${isAccepted ? 'accepted' : g.status}</span> (KES ${g.amount.toLocaleString()})</div>`;
+                            }).join('');
+                        }
+
+                        const createdDate = new Date(loan.created_at).toLocaleDateString();
+                        const approveBtnClass = allAccepted ? "bg-green-600 hover:bg-green-500" : "bg-gray-600 cursor-not-allowed opacity-50";
+                        const takeHome = loan.take_home_amount || loan.amount;
+                        const approveAction = allAccepted ? `openLoanApprovalModal('${loan.id}', '${borrower?.full_name}', '${borrower?.phone}', ${loan.amount}, ${takeHome}, '${loan.disbursement_method || 'mpesa'}')` : "alert('Cannot approve: Waiting for guarantors to accept.')";
+
+                        list.innerHTML += `
+                            <tr class="hover:bg-gray-800">
+                                <td class="p-4 font-medium text-white">${borrower?.full_name || 'Unknown'}</td>
+                                <td class="p-4 font-bold text-indigo-400">KES ${loan.amount.toLocaleString()}</td>
+                                <td class="p-4 text-gray-400 text-xs">${guarantorHtml}</td>
+                                <td class="p-4 text-gray-400">${createdDate}</td>
+                                <td class="p-4 text-right">
+                                    <button onclick="${approveAction}" class="${approveBtnClass} text-white px-3 py-1 rounded text-xs font-bold">Approve</button>
+                                </td>
+                            </tr>`;
+                    }
+                } else {
+                    list.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500">No pending loan approvals.</td></tr>`;
+                }
+            } catch (err) {
+                console.error('Load loans error:', err);
+                document.getElementById('loan-list').innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        // --- GUARANTEES LOGIC ---
+        async function loadGuarantees() {
+            const list = document.getElementById('guarantees-list');
+            list.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">Loading...</td></tr>';
+
+            try {
+                // Fetch guarantees with nested joins to get Guarantor and Borrower details
+                // Note: We assume 'guarantor_id' links to profiles and 'loan_id' links to loans
+                // Loans then links to 'borrower_id' in profiles
+                const { data: guarantees, error } = await client
+                    .from('guarantees')
+                    .select(`
+                        *,
+                        guarantor:profiles!guarantor_id(full_name, phone),
+                        loan:loans(
+                            amount,
+                            borrower:profiles!borrower_id(full_name, phone)
+                        )
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                document.getElementById('guarantee-count').innerText = (guarantees ? guarantees.length : 0) + ' Active';
+
+                if (!guarantees || guarantees.length === 0) {
+                    list.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">No active guarantees found.</td></tr>';
+                    return;
+                }
+
+                list.innerHTML = guarantees.map(g => {
+                    const guarantorName = g.guarantor?.full_name || 'Unknown';
+                    const borrowerName = g.loan?.borrower?.full_name || 'Unknown';
+                    const loanAmount = g.loan?.amount || 0;
+                    const date = new Date(g.created_at).toLocaleDateString();
+                    const statusColor = g.status === 'locked' ? 'text-red-400' : 'text-green-400';
+
+                    let actionBtn = '';
+                    if (g.status === 'locked') {
+                        actionBtn = `<button onclick="releaseGuarantee('${g.id}', '${g.guarantor_id}', ${g.amount})" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors">Release</button>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-gray-800 border-b border-gray-700 transition-colors">
+                            <td class="p-4 font-bold text-white">${guarantorName}</td>
+                            <td class="p-4 text-gray-300">${borrowerName}</td>
+                            <td class="p-4 text-right text-red-400 font-bold">KES ${g.amount.toLocaleString()}</td>
+                            <td class="p-4 text-right text-gray-400">KES ${loanAmount.toLocaleString()}</td>
+                            <td class="p-4 ${statusColor} font-bold uppercase text-xs">${g.status}</td>
+                            <td class="p-4 text-gray-500 text-xs">${date}</td>
+                            <td class="p-4 text-right">${actionBtn}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("Guarantees load error:", err);
+                list.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-red-500">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        async function releaseGuarantee(guaranteeId, guarantorId, amount) {
+            if (!confirm(`Release this guarantee? This will unlock KES ${amount.toLocaleString()} for the guarantor.`)) return;
+
+            try {
+                // 1. Update guarantee status
+                const { error: gError } = await client.from('guarantees').update({ status: 'released' }).eq('id', guaranteeId);
+                if (gError) throw gError;
+
+                // 2. Unlock funds in profile
+                const { data: profile } = await client.from('profiles').select('locked_guarantee_amount').eq('id', guarantorId).single();
+                const newLocked = Math.max(0, (profile?.locked_guarantee_amount || 0) - amount);
+
+                await client.from('profiles').update({ locked_guarantee_amount: newLocked }).eq('id', guarantorId);
+
+                alert('✅ Guarantee released and funds unlocked.');
+                loadGuarantees();
+                loadDashboard(); // Refresh stats
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        function filterGuarantees() {
+            const input = document.getElementById('guarantee-search').value.toUpperCase();
+            const rows = document.getElementById('guarantees-list').getElementsByTagName('tr');
+            for (let row of rows) {
+                const text = row.innerText.toUpperCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            }
+        }
+
+        // --- LOAN APPROVAL MODAL ---
+        function openLoanApprovalModal(loanId, borrowerName, phone, amount, takeHomeAmount, defaultMethod) {
+            const methodLabel = defaultMethod === 'savings' ? 'Savings Account (Internal)' : 'M-Pesa (External)';
+            const deductions = amount - takeHomeAmount;
+
+            let promptMsg = `Approve loan for ${borrowerName}?\n\nPrincipal: KES ${amount.toLocaleString()}\n`;
+            if (deductions > 0) {
+                promptMsg += `Deductions (Fees/Insure): KES ${deductions.toLocaleString()}\nTake Home (Disbursed): KES ${takeHomeAmount.toLocaleString()}\n`;
+            }
+            promptMsg += `Requested Method: ${methodLabel}\n\nConfirm Disbursement Method:\n1 = M-Pesa\n2 = Savings Account\n\nEnter 1 or 2:`;
+
+            const method = prompt(promptMsg, defaultMethod === 'savings' ? '2' : '1');
+
+            if (method === '1' || method === '2') {
+                const chosenMethod = method === '1' ? 'mpesa' : 'savings';
+                approveLoan(loanId, takeHomeAmount, phone, borrowerName, chosenMethod);
+            }
+        }
+
+        // --- APPROVE LOAN ---
+        async function approveLoan(loanId, disburseAmount, phone, borrowerName, disburseMethod) {
+            try {
+                console.log(`Approving loan ${loanId} for ${borrowerName} (Disbursing ${disburseAmount}) via ${disburseMethod}`);
+
+                // Get the loan to fetch borrower_id if phone is missing
+                let borrowerPhone = phone;
+                if (!borrowerPhone || borrowerPhone === 'undefined') {
+                    const { data: loan } = await client.from('loans').select('borrower_id').eq('id', loanId).single();
+                    if (loan) {
+                        const { data: borrower } = await client.from('profiles').select('phone').eq('id', loan.borrower_id).single();
+                        borrowerPhone = borrower?.phone || '';
+                    }
+                }
+
+                if (!borrowerPhone) {
+                    throw new Error('Borrower phone number not found. Please update member profile with phone number.');
+                }
+
+                console.log(`Using phone: ${borrowerPhone}`);
+
+                // Call edge function to disburse EXACTLY the take home amount
+                const res = await fetch(
+                    `https://ckcxwsorhuauxijxzihv.supabase.co/functions/v1/mpesa-disburse?loanId=${loanId}&phone=${borrowerPhone}&amount=${disburseAmount}&method=${disburseMethod}`,
+                    { headers: { 'Authorization': 'Bearer ' + supabaseKey } }
+                );
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                console.log('Disburse response:', data);
+
+                // Update loan status to active
+                const { error } = await client.from('loans')
+                    .update({ status: 'active' })
+                    .eq('id', loanId);
+
+                if (error) throw error;
+
+                alert(`✅ Loan approved! Disbursed KES ${disburseAmount.toLocaleString()} to ${borrowerName}\nMethod: ${disburseMethod === 'mpesa' ? 'M-Pesa' : 'Savings Account'}`);
+                loadLoanApprovals();
+                loadDashboard();
+            } catch (err) {
+                console.error('Approval error:', err);
+                alert(`Error approving loan: ${err.message}`);
+            }
+        }
+
+        // --- MEMBER CAPITAL LOGIC ---
+        // KYC MODAL
+        function openKYC(userId) {
+            const modal = document.getElementById('kyc-modal');
+            modal.setAttribute('data-user', userId);
+            modal.classList.remove('hidden');
+            loadKYC(userId);
+        }
+
+        function closeKYC() {
+            document.getElementById('kyc-modal').classList.add('hidden');
+            document.getElementById('kyc-content').innerHTML = '<div class="p-6 text-center text-gray-500">Loading...</div>';
+        }
+
+        async function loadKYC(userId) {
+            const container = document.getElementById('kyc-content');
+            container.innerHTML = '<div class="p-10 text-center"><i class="ri-loader-4-line animate-spin text-4xl text-indigo-500"></i><p class="mt-2 text-gray-500 font-medium">Fetching Member Profile...</p></div>';
+
+            try {
+                const { data: profile } = await client.from('profiles').select('*').eq('id', userId).single();
+                const { data: docs } = await client.from('documents').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+
+                if (!profile) throw new Error("Profile not found");
+
+                const name = profile?.full_name || profile?.first_name || 'No name';
+                const avatar = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=200`;
+                const joined = new Date(profile.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                // Location string
+                const loc = [profile.ward, profile.sub_county, profile.county, profile.country].filter(Boolean).join(', ');
+
+                // Suspend Button Logic
+                const isSuspended = profile.membership_status === 'suspended' || profile.membership_status === 'rejected';
+                const suspendLabel = isSuspended ? 'Activate' : 'Suspend';
+                const suspendColor = isSuspended ? 'bg-green-50 hover:bg-green-100 text-green-600' : 'bg-red-50 hover:bg-red-100 text-red-600';
+                const suspendIcon = isSuspended ? 'ri-check-double-line' : 'ri-prohibited-line';
+
+                let html = `
+                    <div class="relative bg-gray-50">
+                        <!-- Download Button -->
+                        <button onclick="downloadKYCPDF('${userId}')" class="absolute top-4 left-4 z-10 bg-white/80 hover:bg-blue-50 text-gray-500 hover:text-blue-600 p-2 rounded-full shadow-sm transition-colors backdrop-blur-sm" title="Download PDF">
+                            <i class="ri-download-cloud-2-line text-2xl"></i>
+                        </button>
+
+                        <!-- Close Button -->
+                        <button onclick="closeKYC()" class="absolute top-4 right-4 z-10 bg-white/80 hover:bg-red-50 text-gray-500 hover:text-red-500 p-2 rounded-full shadow-sm transition-colors backdrop-blur-sm">
+                            <i class="ri-close-line text-2xl"></i>
+                        </button>
+                        
+                        <!-- Header Profile -->
+                        <div class="flex flex-col items-center pt-10 pb-8 bg-white border-b border-gray-100">
+                            <div class="relative">
+                                <img src="${avatar}" class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl">
+                                <div class="absolute bottom-1 right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white"></div>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900 mt-4">${name}</h2>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="bg-indigo-100 text-indigo-700 px-3 py-0.5 rounded-full text-xs font-bold tracking-wide border border-indigo-200">${profile.member_number || 'PENDING'}</span>
+                                <span class="text-gray-400 text-xs">•</span>
+                                <span class="text-gray-500 text-sm">${profile.phone || 'No Phone'}</span>
+                            </div>
+                            
+                            <div class="flex gap-3 mt-6">
+                                <button onclick="loadEditMember('${userId}')" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors shadow-sm">
+                                    <i class="ri-edit-line"></i> Edit Details
+                                </button>
+                                <button onclick="suspendMember('${userId}', '${profile.membership_status}')" class="px-4 py-2 ${suspendColor} border border-transparent rounded-lg text-xs font-bold flex items-center gap-2 transition-colors shadow-sm">
+                                    <i class="${suspendIcon}"></i> ${suspendLabel}
+                                </button>
+                                ${profile.email ? `<a href="mailto:${profile.email}" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors shadow-sm">
+                                    <i class="ri-mail-send-line"></i> Email
+                                </a>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="p-8 space-y-8">
+                            <!-- Details Grid -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="space-y-4">
+                                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 pb-2">Personal Information</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="flex justify-between"><span class="text-gray-500">National ID</span> <span class="font-semibold text-gray-900">${profile.id_number || 'N/A'}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-500">Email</span> <a href="${profile.email ? 'mailto:' + profile.email : '#'}" class="font-semibold ${profile.email ? 'text-indigo-600 hover:underline' : 'text-gray-900'}">${profile.email || 'N/A'}</a></div>
+                                        <div class="flex justify-between"><span class="text-gray-500">Joined Date</span> <span class="font-semibold text-gray-900">${joined}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-500">Location</span> <span class="font-semibold text-gray-900 text-right max-w-[60%]">${loc || 'N/A'}</span></div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 pb-2">Financial Status</h3>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="flex justify-between"><span class="text-gray-500">Savings Balance</span> <span class="font-bold text-green-600">KES ${(profile.savings_balance || 0).toLocaleString()}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-500">Share Capital</span> <span class="font-bold text-purple-600">KES ${(profile.share_capital || 0).toLocaleString()}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-500">Locked Guarantees</span> <span class="font-bold text-orange-600">KES ${(profile.locked_guarantee_amount || 0).toLocaleString()}</span></div>
+                                        <div class="flex justify-between"><span class="text-gray-500">Membership</span> <span class="font-bold ${profile.membership_status === 'approved' ? 'text-green-600' : 'text-yellow-600'} uppercase text-xs bg-gray-100 px-2 py-0.5 rounded">${profile.membership_status}</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Documents Section -->
+                            <div>
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 pb-2 mb-4">KYC Documents (${docs ? docs.length : 0})</h3>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                ${docs && docs.length > 0 ? docs.map(d => `
+                                    <div class="group relative bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all">
+                                        <div class="aspect-video bg-gray-100 w-full overflow-hidden relative">
+                                            ${d.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+                        ? `<img src="${d.url}" class="w-full h-full object-cover cursor-pointer transition-transform group-hover:scale-105" onclick="window.open('${d.url}', '_blank')">`
+                        : `<div class="w-full h-full flex items-center justify-center text-gray-400"><i class="ri-file-text-line text-4xl"></i></div>`
+                    }
+                                            <a href="${d.url}" target="_blank" class="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><i class="ri-external-link-line"></i></a>
+                                        </div>
+                                        <div class="p-3">
+                                            <p class="text-xs font-bold text-gray-800 truncate" title="${d.type}">${d.type}</p>
+                                            <p class="text-[10px] text-gray-500 truncate mb-2">${new Date(d.created_at).toLocaleDateString()}</p>
+                                            <div class="flex justify-between items-center">
+                                                <button onclick="verifyDocument('${d.id}', ${!d.verified})" class="w-full text-[10px] py-1.5 rounded font-bold transition-colors ${d.verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}">
+                                                    ${d.verified ? '<i class="ri-checkbox-circle-line"></i> Verified' : 'Verify Document'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `).join('') : `<div class="col-span-full text-center py-8 text-gray-400 italic bg-gray-50 rounded-xl border border-dashed border-gray-200">No documents uploaded yet.</div>`}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.innerHTML = html;
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `<div class="p-10 text-center text-red-500"><i class="ri-error-warning-line text-4xl mb-2"></i><br>Error loading profile: ${err.message}</div>`;
+            }
+        }
+
+        async function loadEditMember(userId) {
+            const container = document.getElementById('kyc-content');
+            container.innerHTML = '<div class="p-10 text-center"><i class="ri-loader-4-line animate-spin text-2xl"></i> Loading form...</div>';
+
+            try {
+                const { data: profile } = await client.from('profiles').select('*').eq('id', userId).single();
+                if (!profile) throw new Error("Profile not found");
+
+                container.innerHTML = `
+                    <div class="p-8 bg-white min-h-[50vh]">
+                        <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+                            <h2 class="text-xl font-bold text-gray-800">Edit Member Details</h2>
+                            <button onclick="loadKYC('${userId}')" class="text-gray-400 hover:text-gray-600"><i class="ri-close-line text-2xl"></i></button>
+                        </div>
+                        
+                        <div class="space-y-5">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label>
+                                    <input type="text" id="edit-fullname" value="${profile.full_name || ''}" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number</label>
+                                    <input type="text" id="edit-phone" value="${profile.phone || ''}" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
+                                    <input type="text" id="edit-email" value="${profile.email || ''}" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">National ID</label>
+                                    <input type="text" id="edit-idnumber" value="${profile.id_number || ''}" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Member Number</label>
+                                    <input type="text" id="edit-membernumber" value="${profile.member_number || ''}" class="w-full p-3 border border-gray-200 rounded-xl bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-medium">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3 mt-8 pt-6 border-t border-gray-100">
+                            <button onclick="updateMember('${userId}')" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-200">Save Changes</button>
+                            <button onclick="loadKYC('${userId}')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-xl font-bold transition-colors">Cancel</button>
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                alert("Error: " + err.message);
+                loadKYC(userId);
+            }
+        }
+
+        async function updateMember(userId) {
+            const updates = {
+                full_name: document.getElementById('edit-fullname').value,
+                phone: document.getElementById('edit-phone').value,
+                email: document.getElementById('edit-email').value,
+                id_number: document.getElementById('edit-idnumber').value,
+                member_number: document.getElementById('edit-membernumber').value
+            };
+
+            try {
+                const { error } = await client.from('profiles').update(updates).eq('id', userId);
+                if (error) throw error;
+                alert("✅ Member details updated successfully.");
+                loadKYC(userId);
+                loadMemberCapital(); // Refresh main list
+            } catch (err) {
+                alert("Error updating member: " + err.message);
+            }
+        }
+
+        async function suspendMember(userId, currentStatus) {
+            const isSuspended = currentStatus === 'suspended' || currentStatus === 'rejected';
+            const action = isSuspended ? 'activate' : 'suspend';
+            const newStatus = isSuspended ? 'approved' : 'suspended';
+
+            if (!confirm(`Are you sure you want to ${action} this member?`)) return;
+
+            try {
+                const { error } = await client.from('profiles').update({ membership_status: newStatus }).eq('id', userId);
+                if (error) throw error;
+
+                alert(`✅ Member ${action}d successfully.`);
+                loadKYC(userId);
+                loadMemberCapital();
+            } catch (err) {
+                alert("Error: " + err.message);
+            }
+        }
+
+        async function downloadKYCPDF(userId) {
+            try {
+                const { data: profile } = await client.from('profiles').select('*').eq('id', userId).single();
+                const { data: docs } = await client.from('documents').select('*').eq('user_id', userId);
+
+                if (!profile) { alert("Profile not found"); return; }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Header & Logo
+                const img = new Image();
+                img.src = 'juvinal.png';
+
+                img.onload = function () {
+                    doc.addImage(img, 'PNG', 20, 10, 15, 15);
+                    continueDrawing();
+                };
+                img.onerror = function () {
+                    console.warn("Logo failed to load for Admin PDF.");
+                    continueDrawing();
+                };
+
+                function continueDrawing() {
+                    doc.setFontSize(20);
+                    doc.setTextColor(79, 70, 229); // Indigo
+                    doc.text("Juvinal Pay - Member Profile", 105, 20, null, null, "center");
+
+                    doc.setFontSize(10);
+                    doc.setTextColor(100);
+                    doc.text(`Generated on: ${new Date().toLocaleString()}`, 105, 28, null, null, "center");
+
+                    // Personal Info
+                    doc.setDrawColor(200);
+                    doc.line(20, 35, 190, 35);
+
+                    doc.setFontSize(14);
+                    doc.setTextColor(0);
+                    doc.text("Personal Information", 20, 45);
+
+                    doc.setFontSize(11);
+                    doc.setTextColor(80);
+
+                    let y = 55;
+                    const addRow = (label, value) => {
+                        doc.setFont("helvetica", "bold");
+                        doc.text(label, 20, y);
+                        doc.setFont("helvetica", "normal");
+                        doc.text(String(value || "N/A"), 70, y);
+                        y += 8;
+                    };
+
+                    addRow("Full Name:", profile.full_name || profile.first_name);
+                    addRow("Member Number:", profile.member_number || "PENDING");
+                    addRow("National ID:", profile.id_number);
+                    addRow("Phone Number:", profile.phone);
+                    addRow("Email:", profile.email);
+
+                    const loc = [profile.ward, profile.sub_county, profile.county, profile.country].filter(Boolean).join(', ');
+                    addRow("Location:", loc);
+                    addRow("Joined Date:", new Date(profile.created_at).toLocaleDateString());
+
+                    // Financials
+                    y += 5;
+                    doc.line(20, y, 190, y);
+                    y += 10;
+
+                    doc.setFontSize(14);
+                    doc.setTextColor(0);
+                    doc.text("Financial Status", 20, y);
+                    y += 10;
+
+                    doc.setFontSize(11);
+                    doc.setTextColor(80);
+
+                    addRow("Savings Balance:", `KES ${(profile.savings_balance || 0).toLocaleString()}`);
+                    addRow("Share Capital:", `KES ${(profile.share_capital || 0).toLocaleString()}`);
+                    addRow("Locked Guarantees:", `KES ${(profile.locked_guarantee_amount || 0).toLocaleString()}`);
+                    addRow("Membership Status:", (profile.membership_status || "").toUpperCase());
+
+                    // Documents Table
+                    y += 5;
+                    doc.line(20, y, 190, y);
+                    y += 10;
+
+                    doc.setFontSize(14);
+                    doc.setTextColor(0);
+                    doc.text("Uploaded Documents", 20, y);
+                    y += 10;
+
+                    if (docs && docs.length > 0) {
+                        const tableData = docs.map(d => [
+                            d.type,
+                            d.file_name || "File",
+                            d.verified ? "Verified" : "Pending",
+                            new Date(d.created_at).toLocaleDateString()
+                        ]);
+
+                        doc.autoTable({
+                            startY: y,
+                            head: [['Document Type', 'File Name', 'Status', 'Upload Date']],
+                            body: tableData,
+                            theme: 'grid',
+                            headStyles: { fillColor: [79, 70, 229] }
+                        });
+                    } else {
+                        doc.setFontSize(11);
+                        doc.setTextColor(150);
+                        doc.text("No documents uploaded.", 20, y);
+                    }
+
+                    doc.save(`Profile_${profile.full_name || 'Member'}.pdf`);
+
+                    // Save PDF
+                    doc.save(`Member_Profile_${profile.member_number || profile.id_number}.pdf`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error generating PDF: " + e.message);
+            }
+        }
+
+        async function verifyDocument(docId, makeVerified) {
+            try {
+                const { error } = await client.from('documents').update({ verified: makeVerified, verified_by: null, verified_at: makeVerified ? new Date().toISOString() : null }).eq('id', docId);
+                if (error) throw error;
+                // reload modal content
+                const modal = document.getElementById('kyc-modal');
+                const userId = modal.getAttribute('data-user');
+                // find userId by querying document
+                const { data: doc } = await client.from('documents').select('user_id').eq('id', docId).single();
+                if (doc) loadKYC(doc.user_id);
+            } catch (err) {
+                alert('Error verifying document: ' + err.message);
+            }
+        }
+
+        // --- MEMBER MANAGEMENT ---
+        let membersCache = { active: [], pending: [] };
+        let currentMemberView = 'active'; // 'active' or 'pending'
+
+        async function loadMemberCapital() {
+            const list = document.getElementById('member-list');
+            list.innerHTML = '<tr><td colspan="5" class="p-10 text-center">Loading members...</td></tr>';
+
+            try {
+                const { data: members, error } = await client
+                    .from('profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // Separate active and pending
+                const pending = members.filter(m => m.membership_status === 'pending');
+                const active = members.filter(m => m.membership_status !== 'pending');
+
+                membersCache.active = active;
+                membersCache.pending = pending;
+
+                // Fetch M-Pesa codes for pending users (Registration Fees)
+                if (pending.length > 0) {
+                    const pendingIds = pending.map(p => p.id);
+                    const { data: txs } = await client.from('transactions')
+                        .select('user_id, mpesa_code, created_at')
+                        .eq('type', 'registration_fee')
+                        .in('user_id', pendingIds);
+
+                    membersCache.pending = pending.map(p => {
+                        const tx = txs ? txs.find(t => t.user_id === p.id) : null;
+                        return {
+                            ...p,
+                            reg_mpesa_code: tx ? tx.mpesa_code : 'N/A',
+                            reg_date: tx ? tx.created_at : p.created_at
+                        };
+                    });
+                }
+
+                updateMemberTabsUI();
+                renderMemberTable();
+
+            } catch (err) {
+                console.error("ADMIN LOAD ERROR:", err);
+                list.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-red-500">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        function updateMemberTabsUI() {
+            const pendingCount = membersCache.pending.length;
+            const badge = document.getElementById('badge-members-pending');
+
+            badge.innerText = pendingCount;
+            if (pendingCount > 0) {
+                badge.classList.remove('hidden');
+                badge.classList.add('animate-blink');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('animate-blink');
+            }
+
+            const btnActive = document.getElementById('tab-members-active');
+            const btnPending = document.getElementById('tab-members-pending');
+
+            if (currentMemberView === 'active') {
+                btnActive.className = "px-4 py-2 rounded-t-lg text-sm font-bold transition-colors bg-gray-800 text-white border-b-2 border-purple-500";
+                btnPending.className = "px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-colors text-gray-400 hover:bg-gray-800 border-b-2 border-transparent";
+            } else {
+                btnPending.className = "px-4 py-2 rounded-t-lg text-sm font-bold flex items-center gap-2 transition-colors bg-gray-800 text-yellow-500 border-b-2 border-yellow-500";
+                btnActive.className = "px-4 py-2 rounded-t-lg text-sm font-bold transition-colors text-gray-400 hover:bg-gray-800 border-b-2 border-transparent";
+            }
+        }
+
+        function switchMemberView(view) {
+            currentMemberView = view;
+            updateMemberTabsUI();
+            renderMemberTable();
+        }
+
+        function renderMemberTable() {
+            const thead = document.getElementById('members-table-head');
+            const tbody = document.getElementById('member-list');
+            const data = currentMemberView === 'active' ? membersCache.active : membersCache.pending;
+
+            if (currentMemberView === 'active') {
+                thead.innerHTML = `<tr><th class="px-6 py-4">Member</th><th class="px-6 py-4">Member No</th><th class="px-6 py-4">Phone</th><th class="px-6 py-4 text-right">Savings</th><th class="px-6 py-4 text-right">Shares</th><th class="px-6 py-4 text-right">Status</th><th class="px-6 py-4 text-right">Action</th></tr>`;
+            } else {
+                thead.innerHTML = `<tr><th class="px-6 py-4">New User</th><th class="px-6 py-4">Phone</th><th class="px-6 py-4">M-Pesa Ref</th><th class="px-6 py-4">Date Joined</th><th class="px-6 py-4 text-right">Actions</th></tr>`;
+            }
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-10 text-center text-gray-500">No ${currentMemberView} members found.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(m => {
+                const name = m.full_name || m.first_name || 'No Name';
+                const phone = m.phone || 'No Phone';
+                const avatar = m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
+
+                if (currentMemberView === 'active') {
+                    const identity = m.member_number || m.j_number || 'PENDING';
+                    const savings = (m.savings_balance || 0).toLocaleString();
+                    const shares = (m.share_capital || 0).toLocaleString();
+                    const statusColor = m.membership_status === 'approved' ? 'text-green-400' : 'text-red-400';
+                    return `
+                        <tr class="hover:bg-gray-800/50 border-b border-gray-700 transition-colors">
+                            <td class="px-6 py-4 flex items-center gap-3"><img src="${avatar}" class="w-8 h-8 rounded-full border border-gray-600"><span class="font-bold text-gray-200">${name}</span></td>
+                            <td class="px-6 py-4"><span class="bg-indigo-900/50 text-indigo-300 px-2 py-1 rounded text-[10px] font-mono font-bold border border-indigo-700">${identity}</span></td>
+                            <td class="px-6 py-4 text-gray-400 text-xs font-mono">${phone}</td>
+                            <td class="px-6 py-4 text-right text-green-400 font-bold">KES ${savings}</td>
+                            <td class="px-6 py-4 text-right text-purple-400 font-bold">KES ${shares}</td>
+                            <td class="px-6 py-4 text-right ${statusColor} font-bold text-xs uppercase">${m.membership_status}</td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="openKYC('${m.id}')" class="text-indigo-400 hover:text-indigo-300 font-bold text-xs bg-indigo-900/30 px-3 py-1 rounded border border-indigo-700/50 hover:bg-indigo-900/50 transition-colors">View</button>
+                            </td>
+                        </tr>`;
+                } else {
+                    const mpesaRef = m.reg_mpesa_code || 'N/A';
+                    const dateJoined = new Date(m.reg_date || m.created_at).toLocaleDateString();
+                    return `
+                        <tr class="hover:bg-gray-800/50 border-b border-gray-700 transition-colors bg-yellow-900/10">
+                            <td class="px-6 py-4 flex items-center gap-3">
+                                <img src="${avatar}" class="w-8 h-8 rounded-full border border-yellow-600">
+                                <div><p class="font-bold text-gray-200">${name}</p><p class="text-[10px] text-yellow-500">Pending Approval</p></div>
+                            </td>
+                            <td class="px-6 py-4 text-gray-300 text-xs font-mono">${phone}</td>
+                            <td class="px-6 py-4"><span class="bg-gray-700 text-white px-2 py-1 rounded text-xs font-mono">${mpesaRef}</span></td>
+                            <td class="px-6 py-4 text-gray-400 text-xs">${dateJoined}</td>
+                            <td class="px-6 py-4 text-right flex justify-end gap-2">
+                                <button onclick="openKYC('${m.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1"><i class="ri-eye-line"></i> View</button>
+                                <button onclick="approveMember('${m.id}', '${name}')" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1"><i class="ri-check-line"></i> Approve</button>
+                                <button onclick="rejectMember('${m.id}', '${name}')" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1"><i class="ri-close-line"></i> Reject</button>
+                            </td>
+                        </tr>`;
+                }
+            }).join('');
+        }
+
+        async function approveMember(userId, name) {
+            if (!confirm(`Approve membership for ${name}? This will record a KES 100 registration fee.`)) return;
+            try {
+                // 1. Update Profile Status
+                const { error } = await client.from('profiles').update({ membership_status: 'approved', registration_fee_paid: true }).eq('id', userId);
+                if (error) throw error;
+
+                // 2. Create Registration Fee Transaction
+                await client.from('transactions').insert({
+                    user_id: userId,
+                    type: 'registration_fee',
+                    amount: 100,
+                    status: 'completed',
+                    mpesa_code: 'MANUAL_APPROVAL'
+                });
+
+                // 3. Update Paybill Account Balance
+                const { data: account } = await client.from('accounts').select('id, balance').eq('name', 'paybill').maybeSingle();
+                if (account) {
+                    const newBalance = (account.balance || 0) + 100;
+                    await client.from('accounts').update({ balance: newBalance }).eq('id', account.id);
+                }
+
+                alert(`✅ ${name} is now an approved member. Registration fee recorded.`);
+                loadMemberCapital();
+                loadDashboard(); // Refresh financial stats
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function rejectMember(userId, name) {
+            if (!confirm(`Reject membership for ${name}? This will block their access.`)) return;
+            try {
+                const { error } = await client.from('profiles').update({ membership_status: 'rejected' }).eq('id', userId);
+                if (error) throw error;
+                alert(`❌ ${name} has been rejected.`);
+                loadMemberCapital();
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // --- SEARCH FILTER ---
+        function filterMembers() {
+            const input = document.getElementById('member-search').value.toUpperCase();
+            const rows = document.getElementById('member-list').getElementsByTagName('tr');
+            for (let row of rows) {
+                const text = row.innerText.toUpperCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            }
+        }
+
+        // --- CREDIT PORTFOLIO ---
+        async function loadCredits() {
+            const list = document.getElementById('active-loan-list');
+            list.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-gray-500">Loading...</td></tr>`;
+
+            // Fetch all loans (active, pending, closed) to show full portfolio
+            // OPTIMIZED: Fetch profiles in the same query to avoid N+1 problem
+            const { data: loans, error: creditsError } = await client
+                .from('loans')
+                .select('*, profiles(full_name, phone)')
+                .order('created_at', { ascending: false });
+
+            console.log('===== CREDIT PORTFOLIO DEBUG =====');
+            console.log('Query error:', creditsError);
+            console.log('All loans fetched:', loans);
+
+            list.innerHTML = "";
+
+            if (loans && loans.length > 0) {
+                list.innerHTML = loans.map(loan => {
+                    const u = loan.profiles; // Access joined data directly
+                    const interest = loan.amount * 0.10;
+                    const totalDue = loan.amount + interest;
+                    const totalRepaid = loan.total_repaid || 0;
+                    const remaining = Math.max(0, totalDue - totalRepaid);
+
+                    // Status styling
+                    let statusColor = '';
+                    let statusLabel = '';
+                    if (loan.status === 'active') {
+                        statusColor = 'bg-blue-900 text-blue-200';
+                        statusLabel = '⏳ Active';
+                    } else if (loan.status === 'closed') {
+                        statusColor = 'bg-green-900 text-green-200';
+                        statusLabel = '✅ Closed';
+                    } else if (loan.status === 'pending') {
+                        statusColor = 'bg-yellow-900 text-yellow-200';
+                        statusLabel = '⏸️ Pending';
+                    } else {
+                        statusColor = 'bg-gray-700 text-gray-200';
+                        statusLabel = loan.status.toUpperCase();
+                    }
+
+                    // Repayment progress percentage
+                    const progressPercent = totalDue > 0 ? Math.round((totalRepaid / totalDue) * 100) : 0;
+
+                    return `
+                        <tr class="hover:bg-gray-800 border-b border-gray-800">
+                            <td class="p-4"><div class="font-bold">${u?.full_name || 'Student'}</div><div class="text-[10px] text-gray-500">${u?.phone || 'N/A'}</div></td>
+                            <td class="p-4 font-semibold">KES ${loan.amount.toLocaleString()}</td>
+                            <td class="p-4">KES ${interest.toLocaleString()}</td>
+                            <td class="p-4 text-red-400 font-bold">KES ${totalDue.toLocaleString()}</td>
+                            <td class="p-4 font-semibold text-green-400">KES ${totalRepaid.toLocaleString()}</td>
+                            <td class="p-4 font-bold text-orange-400">KES ${remaining.toLocaleString()}</td>
+                            <td class="p-4">
+                                <span class="px-3 py-1 rounded text-xs font-bold ${statusColor}">${statusLabel}</span>
+                                <div class="text-[10px] text-gray-400 mt-1">${progressPercent}% paid</div>
+                            </td>
+                            <td class="p-4 text-gray-500 text-xs">${new Date(loan.created_at).toLocaleDateString()}</td>
+                        </tr>`;
+                }).join('');
+            } else {
+                list.innerHTML = `<tr><td colspan="8" class="p-6 text-center text-gray-500">No loans in portfolio.</td></tr>`;
+            }
+        }
+
+        // DEBUG FUNCTION - Run from console: debugLoans()
+        async function debugLoans() {
+            console.log('====== COMPLETE LOANS TABLE DEBUG ======');
+            const { data: allLoans, error: error1 } = await client.from('loans').select('*');
+            console.log('Error:', error1);
+            console.log('All loans:', allLoans);
+
+            if (allLoans && allLoans.length > 0) {
+                console.log('Total records:', allLoans.length);
+                const statusCounts = {};
+                allLoans.forEach(loan => {
+                    statusCounts[loan.status] = (statusCounts[loan.status] || 0) + 1;
+                });
+                console.log('Loan statuses breakdown:', statusCounts);
+                console.log('Full loan records:');
+                allLoans.forEach(loan => {
+                    console.log(`  ID: ${loan.id}, Status: "${loan.status}", Amount: ${loan.amount}, Borrower: ${loan.borrower_id}`);
+                });
+            } else {
+                console.log('NO LOANS FOUND IN DATABASE');
+            }
+        }
+
+
+        // --- WITHDRAWAL LOGIC ---
+        async function loadWithdrawals() {
+            const list = document.getElementById('withdrawal-list');
+            list.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500">Loading...</td></tr>';
+
+            try {
+                console.log("Loading pending withdrawals...");
+
+                // Get all pending withdrawals
+                // OPTIMIZED: Fetch profiles in the same query
+                const { data: withdrawals, error } = await client
+                    .from('transactions')
+                    .select('*, profiles(full_name, phone)')
+                    .eq('type', 'withdrawal')
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false });
+
+                console.log("Withdrawals fetched:", withdrawals, "Error:", error);
+
+                if (error) throw error;
+
+                // Update count
+                const count = withdrawals ? withdrawals.length : 0;
+                document.getElementById('withdrawal-count').innerText = count + ' Pending';
+
+                if (!withdrawals || withdrawals.length === 0) {
+                    list.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500">✅ No pending withdrawals - All approved!</td></tr>';
+                    return;
+                }
+
+                // Clear loading message
+                list.innerHTML = '';
+
+                // Render each withdrawal
+                list.innerHTML = withdrawals.map(wd => {
+                    const dateRequested = new Date(wd.created_at).toLocaleDateString();
+                    const userName = wd.profiles?.full_name || 'Unknown';
+                    const userPhone = wd.profiles?.phone || 'N/A';
+
+                    return `
+                        <tr class="hover:bg-gray-800/50 border-b border-gray-700 transition-colors">
+                            <td class="p-4 font-bold text-white">${userName}</td>
+                            <td class="p-4 text-gray-400 font-mono text-xs">${userPhone}</td>
+                            <td class="p-4 text-right text-green-400 font-bold">KES ${wd.amount.toLocaleString()}</td>
+                            <td class="p-4 text-gray-500 text-xs">${dateRequested}</td>
+                            <td class="p-4 text-right space-x-2 flex justify-end gap-2">
+                                <button onclick="approveWithdrawal('${wd.id}', '${wd.user_id}', ${wd.amount}, '${userPhone}')" 
+                                    class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors">
+                                    Approve
+                                </button>
+                                <button onclick="rejectWithdrawal('${wd.id}')" 
+                                    class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded text-xs font-bold transition-colors">
+                                    Reject
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("WITHDRAWAL LOAD ERROR:", err);
+                list.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-red-500">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        async function approveWithdrawal(txId, userId, amount, phone) {
+            if (!confirm(`Approve KES ${amount} withdrawal to ${phone}?`)) return;
+
+            try {
+                console.log("1. Starting withdrawal approval for txId:", txId, "Type:", typeof txId);
+
+                // Call the M-Pesa disburse function
+                const response = await fetch('https://ckcxwsorhuauxijxzihv.supabase.co/functions/v1/mpesa-disburse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + supabaseKey
+                    },
+                    body: JSON.stringify({
+                        withdrawalId: txId,
+                        userId: userId,
+                        amount: amount,
+                        phone: phone
+                    })
+                });
+
+                const result = await response.json();
+                console.log("2. M-Pesa response:", result);
+
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                    return;
+                }
+
+                // Update transaction status to completed - CRITICAL STEP
+                console.log("3. Updating transaction status in database... txId:", txId);
+
+                // First, verify the transaction exists
+                const { data: checkTx } = await client.from('transactions')
+                    .select('*')
+                    .eq('id', txId);
+
+                console.log("3a. Transaction check before update:", checkTx);
+
+                const { data: updateResult, error } = await client.from('transactions')
+                    .update({
+                        status: 'completed',
+                        mpesa_code: result.ConversationID || result.OriginatorConversationID || 'DISBURSED'
+                    })
+                    .eq('id', txId)
+                    .select();
+
+                console.log("4. Update result:", updateResult, "Error:", error);
+
+                if (updateResult && updateResult.length > 0) {
+                    console.log("4a. Update SUCCESS! Updated record:", updateResult[0]);
+                } else {
+                    console.warn("4b. Update WARNING - No records updated. Trying alternative update method...");
+                    // Try alternative: use a direct match without select first
+                    const { error: error2 } = await client.from('transactions')
+                        .update({ status: 'completed' })
+                        .eq('id', txId);
+                    console.log("4c. Alternative update error:", error2);
+                }
+
+                if (error) {
+                    console.error("DB Update Error:", error);
+                    alert('ERROR: Failed to update transaction: ' + error.message);
+                    return;
+                }
+
+                alert('✅ Withdrawal approved and disbursed successfully!');
+                console.log("5. Reloading withdrawal list...");
+
+                // Force reload after a short delay to ensure DB write completes
+                setTimeout(() => {
+                    loadWithdrawals();
+                }, 500);
+
+            } catch (err) {
+                console.error("Approval error:", err);
+                alert('Error approving withdrawal: ' + err.message);
+            }
+        }
+
+        async function rejectWithdrawal(txId) {
+            if (!confirm('Reject this withdrawal request?')) return;
+
+            try {
+                console.log("Rejecting withdrawal txId:", txId);
+
+                const { data: updateResult, error } = await client.from('transactions')
+                    .update({ status: 'rejected' })
+                    .eq('id', txId)
+                    .select();
+
+                console.log("Reject result:", updateResult, "Error:", error);
+
+                if (error) {
+                    console.error("DB Reject Error:", error);
+                    alert('ERROR: Failed to reject withdrawal: ' + error.message);
+                    return;
+                }
+
+                alert('❌ Withdrawal rejected.');
+                loadWithdrawals(); // Reload the list
+            } catch (err) {
+                console.error(err);
+                alert('Error rejecting withdrawal: ' + err.message);
+            }
+        }
+
+        // --- LOCATIONS MANAGEMENT ---
+        let selectedCountryId = null;
+        let selectedCountyId = null;
+        let selectedSubCountyId = null;
+
+        async function loadCountries() {
+            const list = document.getElementById('list-countries');
+            list.innerHTML = '<div class="text-xs text-gray-500 p-2">Loading...</div>';
+
+            const { data, error } = await client.from('countries').select('*').order('name');
+            if (error) { console.error(error); return; }
+
+            list.innerHTML = data.map(c => `
+                <div onclick="selectCountry('${c.id}', this)" class="p-2 rounded cursor-pointer hover:bg-gray-700 text-sm flex justify-between items-center group ${selectedCountryId === c.id ? 'bg-purple-900/50 border border-purple-500' : 'bg-gray-900/30'}">
+                    <span>${c.name}</span>
+                    <button onclick="deleteLocation('country', '${c.id}', event)" class="text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-400"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            `).join('');
+        }
+
+        async function selectCountry(id, el) {
+            selectedCountryId = id;
+            selectedCountyId = null;
+            selectedSubCountyId = null;
+
+            // Update UI
+            loadCountries(); // Refresh to show selection highlight
+            document.getElementById('col-counties').classList.remove('opacity-50');
+            document.getElementById('col-subcounties').classList.add('opacity-50');
+            document.getElementById('col-wards').classList.add('opacity-50');
+            document.getElementById('list-subcounties').innerHTML = '';
+            document.getElementById('list-wards').innerHTML = '';
+
+            // Enable County Input
+            document.getElementById('new-county').disabled = false;
+            document.getElementById('new-county').placeholder = "Add County";
+            document.getElementById('btn-add-county').disabled = false;
+
+            // Disable downstream
+            document.getElementById('new-subcounty').disabled = true;
+            document.getElementById('btn-add-subcounty').disabled = true;
+            document.getElementById('new-ward').disabled = true;
+            document.getElementById('btn-add-ward').disabled = true;
+
+            loadCounties(id);
+        }
+
+        async function loadCounties(countryId) {
+            const list = document.getElementById('list-counties');
+            list.innerHTML = '<div class="text-xs text-gray-500 p-2">Loading...</div>';
+
+            const { data, error } = await client.from('counties').select('*').eq('country_id', countryId).order('name');
+            if (error) { console.error(error); return; }
+
+            list.innerHTML = data.map(c => `
+                <div onclick="selectCounty('${c.id}')" class="p-2 rounded cursor-pointer hover:bg-gray-700 text-sm flex justify-between items-center group ${selectedCountyId === c.id ? 'bg-blue-900/50 border border-blue-500' : 'bg-gray-900/30'}">
+                    <span>${c.name}</span>
+                    <button onclick="deleteLocation('county', '${c.id}', event)" class="text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-400"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            `).join('');
+        }
+
+        async function selectCounty(id) {
+            selectedCountyId = id;
+            selectedSubCountyId = null;
+
+            loadCounties(selectedCountryId); // Refresh highlight
+            document.getElementById('col-subcounties').classList.remove('opacity-50');
+            document.getElementById('col-wards').classList.add('opacity-50');
+            document.getElementById('list-wards').innerHTML = '';
+
+            // Enable Sub-County Input
+            document.getElementById('new-subcounty').disabled = false;
+            document.getElementById('new-subcounty').placeholder = "Add Sub-County";
+            document.getElementById('btn-add-subcounty').disabled = false;
+
+            // Disable downstream
+            document.getElementById('new-ward').disabled = true;
+            document.getElementById('btn-add-ward').disabled = true;
+
+            loadSubCounties(id);
+        }
+
+        async function loadSubCounties(countyId) {
+            const list = document.getElementById('list-subcounties');
+            list.innerHTML = '<div class="text-xs text-gray-500 p-2">Loading...</div>';
+
+            const { data, error } = await client.from('sub_counties').select('*').eq('county_id', countyId).order('name');
+            if (error) { console.error(error); return; }
+
+            list.innerHTML = data.map(c => `
+                <div onclick="selectSubCounty('${c.id}')" class="p-2 rounded cursor-pointer hover:bg-gray-700 text-sm flex justify-between items-center group ${selectedSubCountyId === c.id ? 'bg-green-900/50 border border-green-500' : 'bg-gray-900/30'}">
+                    <span>${c.name}</span>
+                    <button onclick="deleteLocation('sub_county', '${c.id}', event)" class="text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-400"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            `).join('');
+        }
+
+        async function selectSubCounty(id) {
+            selectedSubCountyId = id;
+            loadSubCounties(selectedCountyId); // Refresh highlight
+            document.getElementById('col-wards').classList.remove('opacity-50');
+
+            // Enable Ward Input
+            document.getElementById('new-ward').disabled = false;
+            document.getElementById('new-ward').placeholder = "Add Ward";
+            document.getElementById('btn-add-ward').disabled = false;
+
+            loadWards(id);
+        }
+
+        async function loadWards(subId) {
+            const list = document.getElementById('list-wards');
+            list.innerHTML = '<div class="text-xs text-gray-500 p-2">Loading...</div>';
+
+            const { data, error } = await client.from('wards').select('*').eq('sub_county_id', subId).order('name');
+            if (error) { console.error(error); return; }
+
+            list.innerHTML = data.map(c => `
+                <div class="p-2 rounded bg-gray-900/30 text-sm flex justify-between items-center group hover:bg-gray-700">
+                    <span>${c.name}</span>
+                    <button onclick="deleteLocation('ward', '${c.id}', event)" class="text-red-500 opacity-0 group-hover:opacity-100 hover:text-red-400"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            `).join('');
+        }
+
+        async function addLocation(type) {
+            let name, parentId, table;
+            if (type === 'country') {
+                name = document.getElementById('new-country').value;
+                table = 'countries';
+            } else if (type === 'county') {
+                name = document.getElementById('new-county').value;
+                parentId = selectedCountryId;
+                table = 'counties';
+            } else if (type === 'sub_county') {
+                name = document.getElementById('new-subcounty').value;
+                parentId = selectedCountyId;
+                table = 'sub_counties';
+            } else if (type === 'ward') {
+                name = document.getElementById('new-ward').value;
+                parentId = selectedSubCountyId;
+                table = 'wards';
+            }
+
+            if (!name) return alert('Please enter a name');
+            if (type !== 'country' && !parentId) return alert('Please select a parent region first');
+
+            const payload = { name };
+            if (type === 'county') payload.country_id = parentId;
+            if (type === 'sub_county') payload.county_id = parentId;
+            if (type === 'ward') payload.sub_county_id = parentId;
+
+            const { error } = await client.from(table).insert(payload);
+            if (error) alert('Error: ' + error.message);
+            else {
+                document.getElementById(type === 'sub_county' ? 'new-subcounty' : 'new-' + type).value = '';
+                if (type === 'country') loadCountries();
+                if (type === 'county') loadCounties(selectedCountryId);
+                if (type === 'sub_county') loadSubCounties(selectedCountyId);
+                if (type === 'ward') loadWards(selectedSubCountyId);
+            }
+        }
+
+        async function deleteLocation(type, id, event) {
+            event.stopPropagation(); // Prevent triggering selection
+            if (!confirm('Delete this location? All child locations will also be deleted.')) return;
+
+            const table = type === 'sub_county' ? 'sub_counties' : type === 'country' ? 'countries' : type + 's'; // simple pluralization
+            // Fix table names: country->countries, county->counties, sub_county->sub_counties, ward->wards
+            let tableName = type + 's';
+            if (type === 'country') tableName = 'countries';
+            if (type === 'county') tableName = 'counties';
+            if (type === 'sub_county') tableName = 'sub_counties';
+
+            const { error } = await client.from(tableName).delete().eq('id', id);
+            if (error) alert('Error: ' + error.message);
+            else {
+                if (type === 'country') { selectedCountryId = null; loadCountries(); }
+                if (type === 'county') { selectedCountyId = null; loadCounties(selectedCountryId); }
+                if (type === 'sub_county') { selectedSubCountyId = null; loadSubCounties(selectedCountyId); }
+                if (type === 'ward') loadWards(selectedSubCountyId);
+            }
+        }
+
+        // --- REPORTS & ANALYTICS ---
+        let countyChartInstance = null;
+        let countryChartInstance = null;
+        let growthChartInstance = null;
+        let financialChartInstance = null;
+
+        async function loadReports() {
+            try {
+                // Fetch profiles for demographics
+                const { data: profiles, error } = await client.from('profiles').select('country, county, created_at, membership_status');
+                if (error) throw error;
+
+                // 1. Aggregation
+                const totalMembers = profiles.length;
+                const countyCounts = {};
+                const countryCounts = {};
+                const growthData = {};
+                let activeMembers = 0;
+                let pendingMembers = 0;
+
+                profiles.forEach(p => {
+                    // Status Counts
+                    if (p.membership_status === 'approved') activeMembers++;
+                    else if (p.membership_status === 'pending') pendingMembers++;
+
+                    // County
+                    const county = p.county || 'Unknown';
+                    countyCounts[county] = (countyCounts[county] || 0) + 1;
+
+                    // Country
+                    const country = p.country || 'Unknown';
+                    countryCounts[country] = (countryCounts[country] || 0) + 1;
+
+                    // Growth (YYYY-MM)
+                    if (p.created_at) {
+                        const d = new Date(p.created_at);
+                        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                        growthData[key] = (growthData[key] || 0) + 1;
+                    }
+                });
+
+                // 2. Update Cards
+                document.getElementById('report-total-members').innerText = totalMembers.toLocaleString();
+                document.getElementById('report-active-members').innerText = activeMembers.toLocaleString();
+                document.getElementById('report-pending-members').innerText = pendingMembers.toLocaleString();
+
+                // 3. Render Charts
+                renderCountyChart(countyCounts);
+                renderCountryChart(countryCounts);
+                renderGrowthChart(growthData);
+            } catch (err) {
+                console.error("Reports error:", err);
+            }
+        }
+
+        function renderCountyChart(data) {
+            const ctx = document.getElementById('countyChart').getContext('2d');
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            if (countyChartInstance) countyChartInstance.destroy();
+
+            countyChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Members',
+                        data: values,
+                        backgroundColor: 'rgba(147, 51, 234, 0.5)',
+                        borderColor: 'rgba(147, 51, 234, 1)',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af' } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function renderCountryChart(data) {
+            const ctx = document.getElementById('countryChart').getContext('2d');
+            const labels = Object.keys(data);
+            const values = Object.values(data);
+
+            if (countryChartInstance) countryChartInstance.destroy();
+
+            countryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [
+                            'rgba(34, 197, 94, 0.7)', // Green
+                            'rgba(59, 130, 246, 0.7)', // Blue
+                            'rgba(234, 179, 8, 0.7)',  // Yellow
+                            'rgba(239, 68, 68, 0.7)'   // Red
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { color: '#9ca3af', font: { size: 12 } } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function renderGrowthChart(data) {
+            const ctx = document.getElementById('growthChart').getContext('2d');
+
+            // Sort keys chronologically
+            const sortedKeys = Object.keys(data).sort();
+
+            const labels = sortedKeys.map(k => {
+                const [y, m] = k.split('-');
+                const date = new Date(parseInt(y), parseInt(m) - 1, 1);
+                return date.toLocaleString('default', { month: 'short', year: 'numeric' });
+            });
+            const values = sortedKeys.map(k => data[k]);
+
+            if (growthChartInstance) growthChartInstance.destroy();
+
+            growthChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'New Members',
+                        data: values,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#374151' }, ticks: { color: '#9ca3af', precision: 0 } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function logout() {
+            client.auth.signOut();
+            window.location.href = 'index.html';
+        }
+
+        // --- TRANSACTIONS VIEW ---
+        let allTransactions = [];
+
+        async function loadTransactionsView() {
+            try {
+                // Fetch all transactions with member details in ONE query using join
+                const { data: txs, error: txError } = await client
+                    .from('transactions')
+                    .select('*, profiles(full_name, j_number, phone)')
+                    .order('created_at', { ascending: false })
+                    .limit(500);
+
+                if (txError) throw txError;
+
+                // Map the joined data to flat structure
+                let transactions = [];
+                if (txs && txs.length > 0) {
+                    transactions = txs.map(tx => ({
+                        ...tx,
+                        member_name: tx.profiles?.full_name || 'Unknown',
+                        j_number: tx.profiles?.j_number || 'N/A'
+                    }));
+                }
+
+                allTransactions = transactions;
+                renderTransactionsTable(transactions);
+            } catch (err) {
+                console.error('Load transactions error:', err);
+                document.getElementById('transactions-list').innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500">Error: ${err.message}</td></tr>`;
+            }
+        }
+
+        function filterTransactions() {
+            const searchText = document.getElementById('tx-search').value.toLowerCase();
+            const typeFilter = document.getElementById('tx-filter').value;
+
+            let filtered = allTransactions;
+
+            // Filter by type
+            if (typeFilter !== 'all') {
+                filtered = filtered.filter(tx => tx.type === typeFilter);
+            }
+
+            // Filter by search (member name, j_number, or mpesa code)
+            if (searchText) {
+                filtered = filtered.filter(tx =>
+                    tx.member_name.toLowerCase().includes(searchText) ||
+                    tx.j_number.toLowerCase().includes(searchText) ||
+                    (tx.mpesa_code && tx.mpesa_code.toLowerCase().includes(searchText))
+                );
+            }
+
+            renderTransactionsTable(filtered);
+        }
+
+        function renderTransactionsTable(transactions) {
+            const list = document.getElementById('transactions-list');
+
+            if (!transactions || transactions.length === 0) {
+                list.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500">No transactions found.</td></tr>`;
+                return;
+            }
+
+            list.innerHTML = transactions.map(tx => {
+                const date = new Date(tx.created_at);
+                const dateStr = date.toLocaleDateString();
+                const timeStr = date.toLocaleTimeString();
+
+                let typeColor = '';
+                let typeIcon = '';
+                let typeLabel = '';
+
+                if (tx.type === 'deposit') {
+                    typeColor = 'text-green-400';
+                    typeIcon = '↓';
+                    typeLabel = 'Deposit';
+                } else if (tx.type === 'withdrawal') {
+                    typeColor = 'text-orange-400';
+                    typeIcon = '↑';
+                    typeLabel = 'Withdrawal';
+                } else if (tx.type === 'repayment') {
+                    typeColor = 'text-blue-400';
+                    typeIcon = '⟳';
+                    typeLabel = 'Repayment';
+                } else if (tx.type === 'loan_disbursement') {
+                    typeColor = 'text-indigo-400';
+                    typeIcon = '💰';
+                    typeLabel = 'Loan Disburse';
+                } else if (tx.type === 'registration_fee') {
+                    typeColor = 'text-yellow-400';
+                    typeIcon = '👑';
+                    typeLabel = 'Reg Fee';
+                } else if (tx.type === 'share_transfer') {
+                    typeColor = 'text-purple-400';
+                    typeIcon = '🔄';
+                    typeLabel = 'Share Transfer';
+                }
+
+                const statusColor = tx.status === 'completed' ? 'text-green-400' : 'text-yellow-400';
+                const statusLabel = tx.status === 'completed' ? '✅ Completed' : '⏳ ' + (tx.status || 'Pending');
+
+                return `
+                    <tr class="hover:bg-gray-800 transition-colors">
+                        <td class="p-4 font-medium text-white">${tx.member_name}</td>
+                        <td class="p-4 text-gray-400 font-mono text-xs">${tx.j_number}</td>
+                        <td class="p-4 font-semibold ${typeColor}">${typeIcon} ${typeLabel}</td>
+                        <td class="p-4 text-right font-bold text-white">KES ${Number(tx.amount).toLocaleString()}</td>
+                        <td class="p-4 font-mono text-gray-400 text-xs">${tx.mpesa_code || '—'}</td>
+                        <td class="p-4 text-gray-400 text-xs">${dateStr} <br/> ${timeStr}</td>
+                        <td class="p-4 ${statusColor} font-bold text-sm">${statusLabel}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
+
+</html>
