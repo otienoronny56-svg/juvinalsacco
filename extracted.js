@@ -1,6 +1,17 @@
 ﻿const supabaseUrl = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.supabaseUrl : 'YOUR_SUPABASE_URL';
 const supabaseKey = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.supabaseKey : 'YOUR_SUPABASE_ANON_KEY';
 const client = supabase.createClient(supabaseUrl, supabaseKey);
+
+// Register Service Worker for PWABuilder
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+            console.log('ServiceWorker registration successful');
+        }).catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+}
 let user = null;
 let userProfile = null;
 let isPrivacyMode = false;

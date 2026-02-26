@@ -1,0 +1,21 @@
+{
+  "name": "Juvinal Pay",
+  "short_name": "Juvinal",
+  "description": "Juvinal Sacco Payment and Management System",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6b21a8",
+  "icons": [
+    {
+      "src": "/juvinal.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/juvinal.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
