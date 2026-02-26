@@ -1,5 +1,5 @@
-﻿const supabaseUrl = 'YOUR_SUPABASE_URL';
-const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+﻿const supabaseUrl = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.supabaseUrl : 'YOUR_SUPABASE_URL';
+const supabaseKey = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.supabaseKey : 'YOUR_SUPABASE_ANON_KEY';
 const client = supabase.createClient(supabaseUrl, supabaseKey);
 let user = null;
 let userProfile = null;
