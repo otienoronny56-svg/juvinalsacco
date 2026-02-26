@@ -18,7 +18,14 @@
     </script>
     <script>
         // Prevents Flash of Unstyled Content (FOUC) for dark mode
-        if (
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        .cards-container {
+            display: flex;
+            gap: 1rem;
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             -webkit-overflow-scrolling: touch;
@@ -899,7 +906,8 @@
                     <p class="text-[10px] font-bold text-yellow-700 uppercase">⚠️ Guarantor Required</p>
 
                     <div>
-                        <label class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Search
+                        <label
+                            class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1">Search
                             Guarantor Member</label>
                         <input type="text" id="guarantor-search" onkeyup="searchGuarantorMembers()"
                             placeholder="Type member name or ID..."
