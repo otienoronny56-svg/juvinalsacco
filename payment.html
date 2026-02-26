@@ -1,6 +1,7 @@
 <!-- c:\Users\ronny\Desktop\peter 1\payment.html -->
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +10,11 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
 </head>
+
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
 
     <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        
+
         <!-- Header -->
         <div class="bg-green-700 p-6 text-center">
             <h1 class="text-2xl font-bold text-white">Juvinal Pay</h1>
@@ -27,7 +29,8 @@
         <!-- PENDING STATE -->
         <div id="status-pending" class="hidden p-6 space-y-6">
             <div class="text-center">
-                <div class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div
+                    class="w-16 h-16 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <i class="ri-time-line text-3xl"></i>
                 </div>
                 <h2 class="text-xl font-bold text-gray-800">Application Pending</h2>
@@ -52,12 +55,14 @@
 
             <div class="space-y-3">
                 <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Step 2: Forward Confirmation</h3>
-                <p class="text-xs text-gray-500">Paste your M-Pesa confirmation message below and send it to our admin via WhatsApp.</p>
-                
-                <textarea id="mpesa-msg" rows="3" placeholder="Paste M-Pesa message here (e.g. QBH123... Confirmed...)" 
-                          class="w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"></textarea>
-                
-                <button onclick="sendToWhatsapp()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                <p class="text-xs text-gray-500">Paste your M-Pesa confirmation message below and send it to our admin
+                    via WhatsApp.</p>
+
+                <textarea id="mpesa-msg" rows="3" placeholder="Paste M-Pesa message here (e.g. QBH123... Confirmed...)"
+                    class="w-full p-3 border rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"></textarea>
+
+                <button onclick="sendToWhatsapp()"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
                     <i class="ri-whatsapp-line text-xl"></i>
                     <span>Send for Approval</span>
                 </button>
@@ -91,8 +96,8 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://ckcxwsorhuauxijxzihv.supabase.co' 
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrY3h3c29yaHVhdXhpanh6aWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMzUyMjYsImV4cCI6MjA4NjkxMTIyNn0.l0tBqVbtzXWwVZCusz7BqKof4Eo8CAi88AEvV2uapO4'
+        const supabaseUrl = 'YOUR_SUPABASE_URL'
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'
         const client = supabase.createClient(supabaseUrl, supabaseKey)
 
         async function init() {
@@ -105,15 +110,15 @@
         }
 
         async function checkStatus(userId) {
-            if(!userId) {
+            if (!userId) {
                 const { data: { user } } = await client.auth.getUser();
                 userId = user?.id;
             }
 
             const { data: profile } = await client.from('profiles').select('membership_status').eq('id', userId).single();
-            
+
             document.getElementById('loading').classList.add('hidden');
-            
+
             if (profile.membership_status === 'approved') {
                 window.location.href = 'dashboard.html';
             } else if (profile.membership_status === 'rejected') {
@@ -132,11 +137,11 @@
                 alert("Please paste your M-Pesa message first.");
                 return;
             }
-            
+
             const phone = "254745806488";
             const text = encodeURIComponent(`*New Membership Application*\n\nHere is my payment confirmation:\n${msg}`);
             const url = `https://wa.me/?text=`;
-            
+
             window.open(url, '_blank');
         }
 
@@ -148,4 +153,5 @@
         init();
     </script>
 </body>
+
 </html>

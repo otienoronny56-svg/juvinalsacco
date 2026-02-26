@@ -1,0 +1,15 @@
+# Environment variables
+.env
+.env.local
+
+# Temporary files
+temp.js
+*.tmp
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
