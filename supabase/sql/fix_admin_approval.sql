@@ -7,7 +7,7 @@ CREATE POLICY transactions_insert_admin ON public.transactions
 
 -- 2. Modify Trigger to run as SECURITY DEFINER so it can securely update the accounts table
 CREATE OR REPLACE FUNCTION public.update_paybill_on_reg_fee()
-RETURNS TRIGGER AS $body
+RETURNS TRIGGER AS $$
 BEGIN
   -- Only for completed registration fees
   IF NEW.type = 'registration_fee' AND NEW.status = 'completed' THEN
@@ -17,4 +17,4 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$body LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
