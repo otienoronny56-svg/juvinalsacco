@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -582,6 +582,20 @@
 
                 console.log("Admin user authenticated:", user.id);
                 loadDashboard();
+
+                // 🔴 Realtime Listener for New Profiles
+                client.channel('public:profiles-admin')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, payload => {
+                        console.log('Realtime Event: New Member Joined! Refreshing...');
+                        loadMemberCapital();
+                        loadDashboard();
+                    })
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, payload => {
+                        console.log('Realtime Event: Member Profile Updated! Refreshing...');
+                        loadMemberCapital();
+                    })
+                    .subscribe();
+
             } catch (err) {
                 console.error("Init error:", err);
                 alert("Init error: " + err.message);
@@ -941,7 +955,7 @@
 
                 await client.from('profiles').update({ locked_guarantee_amount: newLocked }).eq('id', guarantorId);
 
-                alert('✅ Guarantee released and funds unlocked.');
+                alert('âœ… Guarantee released and funds unlocked.');
                 loadGuarantees();
                 loadDashboard(); // Refresh stats
             } catch (err) {
@@ -1015,9 +1029,23 @@
 
                 if (error) throw error;
 
-                alert(`✅ Loan approved! Disbursed KES ${disburseAmount.toLocaleString()} to ${borrowerName}\nMethod: ${disburseMethod === 'mpesa' ? 'M-Pesa' : 'Savings Account'}`);
+                alert(`âœ… Loan approved! Disbursed KES ${disburseAmount.toLocaleString()} to ${borrowerName}\nMethod: ${disburseMethod === 'mpesa' ? 'M-Pesa' : 'Savings Account'}`);
                 loadLoanApprovals();
                 loadDashboard();
+
+                // 🔴 Realtime Listener for New Profiles
+                client.channel('public:profiles-admin')
+                    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'profiles' }, payload => {
+                        console.log('Realtime Event: New Member Joined! Refreshing...');
+                        loadMemberCapital();
+                        loadDashboard();
+                    })
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles' }, payload => {
+                        console.log('Realtime Event: Member Profile Updated! Refreshing...');
+                        loadMemberCapital();
+                    })
+                    .subscribe();
+
             } catch (err) {
                 console.error('Approval error:', err);
                 alert(`Error approving loan: ${err.message}`);
@@ -1082,7 +1110,7 @@
                             <h2 class="text-2xl font-bold text-gray-900 mt-4">${name}</h2>
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="bg-indigo-100 text-indigo-700 px-3 py-0.5 rounded-full text-xs font-bold tracking-wide border border-indigo-200">${profile.member_number || 'PENDING'}</span>
-                                <span class="text-gray-400 text-xs">•</span>
+                                <span class="text-gray-400 text-xs">â€¢</span>
                                 <span class="text-gray-500 text-sm">${profile.phone || 'No Phone'}</span>
                             </div>
                             
@@ -1224,7 +1252,7 @@
             try {
                 const { error } = await client.from('profiles').update(updates).eq('id', userId);
                 if (error) throw error;
-                alert("✅ Member details updated successfully.");
+                alert("âœ… Member details updated successfully.");
                 loadKYC(userId);
                 loadMemberCapital(); // Refresh main list
             } catch (err) {
@@ -1243,7 +1271,7 @@
                 const { error } = await client.from('profiles').update({ membership_status: newStatus }).eq('id', userId);
                 if (error) throw error;
 
-                alert(`✅ Member ${action}d successfully.`);
+                alert(`âœ… Member ${action}d successfully.`);
                 loadKYC(userId);
                 loadMemberCapital();
             } catch (err) {
@@ -1545,14 +1573,9 @@
                     mpesa_code: 'MANUAL_APPROVAL'
                 });
 
-                // 3. Update Paybill Account Balance
-                const { data: account } = await client.from('accounts').select('id, balance').eq('name', 'paybill').maybeSingle();
-                if (account) {
-                    const newBalance = (account.balance || 0) + 100;
-                    await client.from('accounts').update({ balance: newBalance }).eq('id', account.id);
-                }
 
-                alert(`✅ ${name} is now an approved member. Registration fee recorded.`);
+
+                alert(`âœ… ${name} is now an approved member. Registration fee recorded.`);
                 loadMemberCapital();
                 loadDashboard(); // Refresh financial stats
             } catch (err) {
@@ -1565,7 +1588,7 @@
             try {
                 const { error } = await client.from('profiles').update({ membership_status: 'rejected' }).eq('id', userId);
                 if (error) throw error;
-                alert(`❌ ${name} has been rejected.`);
+                alert(`âŒ ${name} has been rejected.`);
                 loadMemberCapital();
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -1613,13 +1636,13 @@
                     let statusLabel = '';
                     if (loan.status === 'active') {
                         statusColor = 'bg-blue-900 text-blue-200';
-                        statusLabel = '⏳ Active';
+                        statusLabel = 'â³ Active';
                     } else if (loan.status === 'closed') {
                         statusColor = 'bg-green-900 text-green-200';
-                        statusLabel = '✅ Closed';
+                        statusLabel = 'âœ… Closed';
                     } else if (loan.status === 'pending') {
                         statusColor = 'bg-yellow-900 text-yellow-200';
-                        statusLabel = '⏸️ Pending';
+                        statusLabel = 'â¸ï¸ Pending';
                     } else {
                         statusColor = 'bg-gray-700 text-gray-200';
                         statusLabel = loan.status.toUpperCase();
@@ -1698,7 +1721,7 @@
                 document.getElementById('withdrawal-count').innerText = count + ' Pending';
 
                 if (!withdrawals || withdrawals.length === 0) {
-                    list.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500">✅ No pending withdrawals - All approved!</td></tr>';
+                    list.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-gray-500">âœ… No pending withdrawals - All approved!</td></tr>';
                     return;
                 }
 
@@ -1802,7 +1825,7 @@
                     return;
                 }
 
-                alert('✅ Withdrawal approved and disbursed successfully!');
+                alert('âœ… Withdrawal approved and disbursed successfully!');
                 console.log("5. Reloading withdrawal list...");
 
                 // Force reload after a short delay to ensure DB write completes
@@ -1835,7 +1858,7 @@
                     return;
                 }
 
-                alert('❌ Withdrawal rejected.');
+                alert('âŒ Withdrawal rejected.');
                 loadWithdrawals(); // Reload the list
             } catch (err) {
                 console.error(err);
@@ -2273,32 +2296,32 @@
 
                 if (tx.type === 'deposit') {
                     typeColor = 'text-green-400';
-                    typeIcon = '↓';
+                    typeIcon = 'â†“';
                     typeLabel = 'Deposit';
                 } else if (tx.type === 'withdrawal') {
                     typeColor = 'text-orange-400';
-                    typeIcon = '↑';
+                    typeIcon = 'â†‘';
                     typeLabel = 'Withdrawal';
                 } else if (tx.type === 'repayment') {
                     typeColor = 'text-blue-400';
-                    typeIcon = '⟳';
+                    typeIcon = 'âŸ³';
                     typeLabel = 'Repayment';
                 } else if (tx.type === 'loan_disbursement') {
                     typeColor = 'text-indigo-400';
-                    typeIcon = '💰';
+                    typeIcon = 'ðŸ’°';
                     typeLabel = 'Loan Disburse';
                 } else if (tx.type === 'registration_fee') {
                     typeColor = 'text-yellow-400';
-                    typeIcon = '👑';
+                    typeIcon = 'ðŸ‘‘';
                     typeLabel = 'Reg Fee';
                 } else if (tx.type === 'share_transfer') {
                     typeColor = 'text-purple-400';
-                    typeIcon = '🔄';
+                    typeIcon = 'ðŸ”„';
                     typeLabel = 'Share Transfer';
                 }
 
                 const statusColor = tx.status === 'completed' ? 'text-green-400' : 'text-yellow-400';
-                const statusLabel = tx.status === 'completed' ? '✅ Completed' : '⏳ ' + (tx.status || 'Pending');
+                const statusLabel = tx.status === 'completed' ? 'âœ… Completed' : 'â³ ' + (tx.status || 'Pending');
 
                 return `
                     <tr class="hover:bg-gray-800 transition-colors">
@@ -2306,7 +2329,7 @@
                         <td class="p-4 text-gray-400 font-mono text-xs">${tx.j_number}</td>
                         <td class="p-4 font-semibold ${typeColor}">${typeIcon} ${typeLabel}</td>
                         <td class="p-4 text-right font-bold text-white">KES ${Number(tx.amount).toLocaleString()}</td>
-                        <td class="p-4 font-mono text-gray-400 text-xs">${tx.mpesa_code || '—'}</td>
+                        <td class="p-4 font-mono text-gray-400 text-xs">${tx.mpesa_code || 'â€”'}</td>
                         <td class="p-4 text-gray-400 text-xs">${dateStr} <br/> ${timeStr}</td>
                         <td class="p-4 ${statusColor} font-bold text-sm">${statusLabel}</td>
                     </tr>
@@ -2321,5 +2344,7 @@
 </html>
 
 </html>
+
+
 
 

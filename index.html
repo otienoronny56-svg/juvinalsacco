@@ -550,11 +550,21 @@
             console.log("Signup successful. User ID:", userId);
 
             try {
-                // Upsert id_number into profiles if provided
-                if (idNumber && userId) {
-                    console.log("Upserting id_number:", idNumber);
-                    const { error: idErr } = await client.from('profiles').upsert({ id: userId, id_number: idNumber });
-                    if (idErr) console.warn('ID number upsert warning:', idErr.message);
+                // Upsert full profile data directly
+                if (userId) {
+                    const profileData = {
+                        id: userId,
+                        id_number: idNumber || null,
+                        full_name: (fname + ' ' + (lname || '')).trim(),
+                        phone: phone || null,
+                        country: country || 'Kenya',
+                        county: document.getElementById('county').value || null,
+                        sub_county: document.getElementById('sub-county').value || null,
+                        ward: ward || null
+                    };
+                    console.log("Upserting full profile:", profileData);
+                    const { error: pErr } = await client.from('profiles').upsert(profileData);
+                    if (pErr) console.warn('Profile upsert warning:', pErr.message);
                 }
                 console.log("Registration complete. User can upload documents from dashboard.");
 
@@ -575,3 +585,4 @@
 </body>
 
 </html>
+
