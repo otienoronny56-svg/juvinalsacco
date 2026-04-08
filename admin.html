@@ -2298,32 +2298,32 @@
 
                 if (tx.type === 'deposit') {
                     typeColor = 'text-green-400';
-                    typeIcon = 'â†“';
+                    typeIcon = '<i class="ri-arrow-down-circle-line"></i>';
                     typeLabel = 'Deposit';
                 } else if (tx.type === 'withdrawal') {
                     typeColor = 'text-orange-400';
-                    typeIcon = 'â†‘';
+                    typeIcon = '<i class="ri-arrow-up-circle-line"></i>';
                     typeLabel = 'Withdrawal';
                 } else if (tx.type === 'repayment') {
                     typeColor = 'text-blue-400';
-                    typeIcon = 'âŸ³';
+                    typeIcon = '<i class="ri-restart-line"></i>';
                     typeLabel = 'Repayment';
                 } else if (tx.type === 'loan_disbursement') {
                     typeColor = 'text-indigo-400';
-                    typeIcon = 'ðŸ’°';
+                    typeIcon = '<i class="ri-money-dollar-circle-line"></i>';
                     typeLabel = 'Loan Disburse';
                 } else if (tx.type === 'registration_fee') {
                     typeColor = 'text-yellow-400';
-                    typeIcon = 'ðŸ‘‘';
+                    typeIcon = '<i class="ri-vip-crown-line"></i>';
                     typeLabel = 'Reg Fee';
                 } else if (tx.type === 'share_transfer') {
                     typeColor = 'text-purple-400';
-                    typeIcon = 'ðŸ”„';
+                    typeIcon = '<i class="ri-exchange-line"></i>';
                     typeLabel = 'Share Transfer';
                 }
 
                 const statusColor = tx.status === 'completed' ? 'text-green-400' : 'text-yellow-400';
-                const statusLabel = tx.status === 'completed' ? 'âœ… Completed' : 'â³ ' + (tx.status || 'Pending');
+                const statusLabel = tx.status === 'completed' ? '<i class="ri-checkbox-circle-line"></i> Completed' : '<i class="ri-time-line"></i> ' + (tx.status || 'Pending');
 
                 return `
                     <tr class="hover:bg-gray-800 transition-colors">
@@ -2331,7 +2331,7 @@
                         <td class="p-4 text-gray-400 font-mono text-xs">${tx.member_id}</td>
                         <td class="p-4 font-semibold ${typeColor}">${typeIcon} ${typeLabel}</td>
                         <td class="p-4 text-right font-bold text-white">KES ${Number(tx.amount).toLocaleString()}</td>
-                        <td class="p-4 font-mono text-gray-400 text-xs">${tx.mpesa_code || 'â€”'}</td>
+                        <td class="p-4 font-mono text-gray-400 text-xs">${tx.mpesa_code || '-'}</td>
                         <td class="p-4 text-gray-400 text-xs">${dateStr} <br/> ${timeStr}</td>
                         <td class="p-4 ${statusColor} font-bold text-sm">${statusLabel}</td>
                     </tr>

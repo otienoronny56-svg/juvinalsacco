@@ -1549,7 +1549,7 @@
                 statusText = 'Completed';
             } else if (tx.type === 'withdrawal') {
                 const status = tx.status || 'pending';
-                badge = status === 'completed' ? 'Disbursed ✅' : status === 'rejected' ? 'Rejected ❌' : '⏳ Pending';
+                badge = status === 'completed' ? 'Disbursed' : status === 'rejected' ? 'Rejected' : 'Pending';
                 icon = 'ri-bank-card-line';
                 color = 'text-orange-600';
                 statusText = status === 'completed' ? 'Processed' : status === 'rejected' ? 'Declined' : 'Awaiting approval';

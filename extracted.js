@@ -1,4 +1,4 @@
-﻿const supabaseUrl = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.supabaseUrl : 'YOUR_SUPABASE_URL';
+const supabaseUrl = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.supabaseUrl : 'YOUR_SUPABASE_URL';
 const supabaseKey = window.SUPABASE_CONFIG ? window.SUPABASE_CONFIG.supabaseKey : 'YOUR_SUPABASE_ANON_KEY';
 const client = supabase.createClient(supabaseUrl, supabaseKey);
 
@@ -469,7 +469,7 @@ function formatTransaction(tx) {
         statusText = 'Completed';
     } else if (tx.type === 'withdrawal') {
         const status = tx.status || 'pending';
-        badge = status === 'completed' ? 'Disbursed ✅' : status === 'rejected' ? 'Rejected ❌' : '⏳ Pending';
+        badge = status === 'completed' ? 'Disbursed' : status === 'rejected' ? 'Rejected' : 'Pending';
         icon = 'ri-bank-card-line';
         color = 'text-orange-600';
         statusText = status === 'completed' ? 'Processed' : status === 'rejected' ? 'Declined' : 'Awaiting approval';
