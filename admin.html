@@ -216,11 +216,16 @@
                 <div id="view-members" class="hidden-section space-y-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold text-white">Member Capital Directory</h2>
-                        <div class="relative">
-                            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" id="member-search" onkeyup="filterMembers()"
-                                placeholder="Search Identity or Name..."
-                                class="bg-gray-800 pl-10 pr-4 py-2 border border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none text-white">
+                        <div class="flex gap-3">
+                            <button onclick="openOnboardingModal()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-purple-900/20">
+                                <i class="ri-user-add-line"></i> Add New Member
+                            </button>
+                            <div class="relative">
+                                <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" id="member-search" onkeyup="filterMembers()"
+                                    placeholder="Search Identity or Name..."
+                                    class="bg-gray-800 pl-10 pr-4 py-2 border border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-purple-500 outline-none text-white">
+                            </div>
                         </div>
                     </div>
 
@@ -550,6 +555,97 @@
 
             </div>
         </main>
+    </div>
+
+    <!-- Manual Onboarding Modal -->
+    <div id="onboarding-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 w-full max-w-2xl rounded-2xl border border-gray-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-gray-800/50">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2"><i class="ri-user-add-line text-purple-500"></i> Manual Member Onboarding</h3>
+                <button onclick="closeOnboardingModal()" class="text-gray-400 hover:text-white transition-colors"><i class="ri-close-line text-2xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Names Section -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">First Name</label>
+                        <input type="text" id="onboard-fname" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Required">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Middle Name</label>
+                        <input type="text" id="onboard-mname" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Optional">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Last Name</label>
+                        <input type="text" id="onboard-lname" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Required">
+                    </div>
+                </div>
+
+                <!-- Contact & Identity -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Email Address (Auth)</label>
+                        <input type="email" id="onboard-email" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Mandatory">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Phone Number</label>
+                        <input type="tel" id="onboard-phone" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="07... (Mandatory)">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">ID / Passport No</label>
+                        <input type="text" id="onboard-id-number" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Required">
+                    </div>
+                </div>
+
+                <!-- Location Section -->
+                <div class="p-4 bg-gray-800/30 rounded-2xl border border-gray-700/50 space-y-4">
+                    <h4 class="text-xs font-bold text-purple-400 uppercase tracking-widest flex items-center gap-2"><i class="ri-map-pin-line"></i> Residence Details</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Country</label>
+                            <select id="onboard-country" onchange="loadOnboardCounties(this.value)" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 cursor-pointer">
+                                <option value="">Select Country</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">County</label>
+                            <select id="onboard-county" onchange="loadOnboardSubCounties(this.value)" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 cursor-pointer">
+                                <option value="">Select County</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Sub-County</label>
+                            <select id="onboard-sub-county" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500 cursor-pointer">
+                                <option value="">Select Sub-County</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Ward</label>
+                            <input type="text" id="onboard-ward" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Ward Name">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] uppercase font-bold text-gray-500 ml-1">Initial Password</label>
+                    <div class="relative">
+                        <input type="password" id="onboard-password" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-2.5 text-white outline-none focus:border-purple-500" placeholder="Minimum 6 characters">
+                        <button onclick="toggleOnboardPass()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"><i id="onboard-pass-icon" class="ri-eye-off-line"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-gray-700 bg-gray-800/50 flex gap-3">
+                <button onclick="closeOnboardingModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition-colors">Cancel</button>
+                <button onclick="handleManualOnboarding()" id="btn-onboard-submit" class="flex-grow bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-purple-900/40 flex items-center justify-center gap-2">
+                    <i class="ri-user-add-line"></i> Create Member Profile
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- KYC modal (moved into DOM so JS can find it) -->
@@ -2347,6 +2443,132 @@
         }
 
         init();
+        // --- MANUAL ONBOARDING ---
+        function openOnboardingModal() {
+            document.getElementById('onboarding-modal').classList.remove('hidden');
+            loadOnboardCountries();
+        }
+
+        function closeOnboardingModal() {
+            document.getElementById('onboarding-modal').classList.add('hidden');
+        }
+
+        function toggleOnboardPass() {
+            const input = document.getElementById('onboard-password');
+            const icon = document.getElementById('onboard-pass-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('ri-eye-off-line', 'ri-eye-line');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('ri-eye-line', 'ri-eye-off-line');
+            }
+        }
+
+        async function loadOnboardCountries() {
+            const sel = document.getElementById('onboard-country');
+            sel.innerHTML = '<option value="">Loading...</option>';
+            const { data } = await client.from('countries').select('id, name').order('name');
+            sel.innerHTML = '<option value="">Select Country</option>';
+            if (data) data.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.name;
+                opt.text = c.name;
+                opt.dataset.id = c.id;
+                sel.appendChild(opt);
+            });
+        }
+
+        async function loadOnboardCounties() {
+            const countryName = document.getElementById('onboard-country').value;
+            const countryId = document.getElementById('onboard-country').selectedOptions[0].dataset.id;
+            const sel = document.getElementById('onboard-county');
+            sel.innerHTML = '<option value="">Loading...</option>';
+            const { data } = await client.from('counties').select('id, name').eq('country_id', countryId).order('name');
+            sel.innerHTML = '<option value="">Select County</option>';
+            if (data) data.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.name;
+                opt.text = c.name;
+                opt.dataset.id = c.id;
+                sel.appendChild(opt);
+            });
+        }
+
+        async function loadOnboardSubCounties() {
+            const countyId = document.getElementById('onboard-county').selectedOptions[0].dataset.id;
+            const sel = document.getElementById('onboard-sub-county');
+            sel.innerHTML = '<option value="">Loading...</option>';
+            const { data } = await client.from('sub_counties').select('id, name').eq('county_id', countyId).order('name');
+            sel.innerHTML = '<option value="">Select Sub-County</option>';
+            if (data) data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                opt.text = s.name;
+                sel.appendChild(opt);
+            });
+        }
+
+        async function handleManualOnboarding() {
+            const btn = document.getElementById('btn-onboard-submit');
+            const originalText = btn.innerHTML;
+            
+            const payload = {
+                first_name: document.getElementById('onboard-fname').value.trim(),
+                middle_name: document.getElementById('onboard-mname').value.trim(),
+                last_name: document.getElementById('onboard-lname').value.trim(),
+                email: document.getElementById('onboard-email').value.trim(),
+                phone: document.getElementById('onboard-phone').value.trim(),
+                id_number: document.getElementById('onboard-id-number').value.trim(),
+                country: document.getElementById('onboard-country').value,
+                county: document.getElementById('onboard-county').value,
+                sub_county: document.getElementById('onboard-sub-county').value,
+                ward: document.getElementById('onboard-ward').value.trim(),
+                password: document.getElementById('onboard-password').value
+            };
+
+            // Validation
+            if (!payload.email || !payload.phone || !payload.first_name || !payload.last_name || !payload.password) {
+                return alert('Please fill all mandatory fields (Email, Phone, Names, Password)');
+            }
+            if (payload.password.length < 6) return alert('Password must be at least 6 characters');
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Onboarding...';
+
+                const { data: { session } } = await client.auth.getSession();
+                
+                const response = await fetch(`${supabaseUrl}/functions/v1/admin-onboard-user`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.error) throw new Error(result.error);
+
+                alert(`Success! ${payload.first_name} has been added to the Pending Approvals queue.`);
+                closeOnboardingModal();
+                loadMemberCapital();
+                loadDashboard();
+                
+                // Reset Form
+                ['fname', 'mname', 'lname', 'email', 'phone', 'id-number', 'ward', 'password'].forEach(id => {
+                    document.getElementById('onboard-' + id).value = '';
+                });
+
+            } catch (err) {
+                console.error("Onboarding Error:", err);
+                alert("Creation Failed: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
     </script>
 </body>
 
