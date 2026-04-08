@@ -1202,6 +1202,12 @@
                 const suspendColor = isSuspended ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/40' : 'bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/30';
                 const suspendIcon = isSuspended ? 'ri-user-follow-line' : 'ri-user-forbid-line';
 
+                // WhatsApp Formatting
+                let waPhone = profile.phone || '';
+                if (waPhone.startsWith('0')) waPhone = '254' + waPhone.substring(1);
+                else if (waPhone.startsWith('+')) waPhone = waPhone.substring(1);
+                const waLink = `https://wa.me/${waPhone}`;
+
                 let html = `
                     <div class="relative bg-gray-900 text-gray-100 flex flex-col min-h-full">
                         <!-- Top Navigation / Controls -->
@@ -1239,7 +1245,11 @@
                                 </button>
                                 ${profile.email ? `
                                 <a href="mailto:${profile.email}" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl">
-                                    <i class="ri-mail-send-line text-purple-400"></i> Send Email
+                                    <i class="ri-mail-send-line text-purple-400"></i> Email
+                                </a>` : ''}
+                                ${profile.phone ? `
+                                <a href="${waLink}" target="_blank" class="px-5 py-2.5 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-600/30 text-emerald-400 hover:text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl">
+                                    <i class="ri-whatsapp-line"></i> WhatsApp
                                 </a>` : ''}
                             </div>
                         </div>
