@@ -649,15 +649,10 @@
                 document.getElementById('total-reg-fees').innerText = "KES " + Number(totalRegFees).toLocaleString();
                 if (document.getElementById('paybill-balance')) document.getElementById('paybill-balance').innerText = "KES " + Number(paybillBalance).toLocaleString();
 
-                const { data: activeLoans, error: activeError } = await client.from('loans').select('amount').eq('status', 'active');
-                console.log('ACTIVE LOANS (status=active):', activeLoans);
-                console.log('Active loans error:', activeError);
-                const totalLent = activeLoans ? activeLoans.reduce((sum, l) => sum + l.amount, 0) : 0;
-                document.getElementById('total-loans').innerText = "KES " + totalLent.toLocaleString();
-
                 // Calculate Total Locked Guarantees
                 const { data: profiles } = await client.from('profiles').select('locked_guarantee_amount');
                 const totalLocked = profiles ? profiles.reduce((sum, p) => sum + (p.locked_guarantee_amount || 0), 0) : 0;
+                document.getElementById('total-locked').innerText = "KES " + totalLocked.toLocaleString();
                 document.getElementById('total-locked').innerText = "KES " + totalLocked.toLocaleString();
 
                 loadFinancialChart();
@@ -1599,6 +1594,7 @@
                 if (error) throw error;
                 alert(`âŒ ${name} has been rejected.`);
                 loadMemberCapital();
+                loadDashboard();
             } catch (err) {
                 alert('Error: ' + err.message);
             }
@@ -1869,6 +1865,7 @@
 
                 alert('âŒ Withdrawal rejected.');
                 loadWithdrawals(); // Reload the list
+                loadDashboard();
             } catch (err) {
                 console.error(err);
                 alert('Error rejecting withdrawal: ' + err.message);
