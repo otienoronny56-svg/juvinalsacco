@@ -1519,7 +1519,7 @@
                 const avatar = m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`;
 
                 if (currentMemberView === 'active') {
-                    const identity = m.member_number || m.j_number || 'PENDING';
+                    const identity = m.member_number || 'PENDING';
                     const savings = (m.savings_balance || 0).toLocaleString();
                     const shares = (m.share_capital || 0).toLocaleString();
                     const statusColor = m.membership_status === 'approved' ? 'text-green-400' : 'text-red-400';
@@ -2232,7 +2232,7 @@
                 // Fetch all transactions with member details in ONE query using join
                 const { data: txs, error: txError } = await client
                     .from('transactions')
-                    .select('*, profiles(full_name, j_number, phone)')
+                    .select('*, profiles(full_name, member_number, phone)')
                     .order('created_at', { ascending: false })
                     .limit(500);
 
@@ -2244,7 +2244,7 @@
                     transactions = txs.map(tx => ({
                         ...tx,
                         member_name: tx.profiles?.full_name || 'Unknown',
-                        j_number: tx.profiles?.j_number || 'N/A'
+                        member_id: tx.profiles?.member_number || 'N/A'
                     }));
                 }
 
@@ -2271,7 +2271,7 @@
             if (searchText) {
                 filtered = filtered.filter(tx =>
                     tx.member_name.toLowerCase().includes(searchText) ||
-                    tx.j_number.toLowerCase().includes(searchText) ||
+                    tx.member_id.toLowerCase().includes(searchText) ||
                     (tx.mpesa_code && tx.mpesa_code.toLowerCase().includes(searchText))
                 );
             }
@@ -2328,7 +2328,7 @@
                 return `
                     <tr class="hover:bg-gray-800 transition-colors">
                         <td class="p-4 font-medium text-white">${tx.member_name}</td>
-                        <td class="p-4 text-gray-400 font-mono text-xs">${tx.j_number}</td>
+                        <td class="p-4 text-gray-400 font-mono text-xs">${tx.member_id}</td>
                         <td class="p-4 font-semibold ${typeColor}">${typeIcon} ${typeLabel}</td>
                         <td class="p-4 text-right font-bold text-white">KES ${Number(tx.amount).toLocaleString()}</td>
                         <td class="p-4 font-mono text-gray-400 text-xs">${tx.mpesa_code || 'â€”'}</td>
