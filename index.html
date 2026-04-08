@@ -554,6 +554,7 @@
                 if (userId) {
                     const profileData = {
                         id: userId,
+                        email: email, // Added email field
                         id_number: idNumber || null,
                         full_name: (fname + ' ' + (lname || '')).trim(),
                         phone: phone || null,

@@ -1,0 +1,41 @@
+name: Supabase Keep Alive (peter 1)
+
+on:
+  schedule:
+    # Runs every day at 08:00 UTC (11:00 EAT - East Africa Time)
+    - cron: '0 8 * * *'
+  # Allows you to manually trigger this workflow from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    name: Ping Supabase to Keep It Alive
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "🏓 Pinging Supabase at $(date)..."
+
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "https://ckcxwsorhuauxijxzihv.supabase.co/rest/v1/" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrY3h3c29yaHVhdXhpanh6aWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMzUyMjYsImV4cCI6MjA4NjkxMTIyNn0.l0tBqVbtzXWwVZCusz7BqKof4Eo8CAi88AEvV2uapO4" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNrY3h3c29yaHVhdXhpanh6aWh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzMzUyMjYsImV4cCI6MjA4NjkxMTIyNn0.l0tBqVbtzXWwVZCusz7BqKof4Eo8CAi88AEvV2uapO4")
+
+          echo "📡 HTTP Response Code: $RESPONSE"
+
+          if [ "$RESPONSE" -ge 200 ] && [ "$RESPONSE" -lt 400 ]; then
+            echo "✅ Supabase is alive and responding!"
+          else
+            echo "❌ Unexpected response from Supabase: $RESPONSE"
+            exit 1
+          fi
+
+      - name: Log Ping Result
+        if: always()
+        run: |
+          echo "---"
+          echo "🕐 Ping completed at: $(date)"
+          echo "🌍 Project: Juvinal Sacco (peter 1)"
+          echo "🔗 Supabase URL: https://ckcxwsorhuauxijxzihv.supabase.co"
+          echo "---"
