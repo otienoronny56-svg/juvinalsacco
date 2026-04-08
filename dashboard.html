@@ -505,15 +505,6 @@
 
     <!-- VIEWS -->
     <main id="dashboard-view" class="max-w-md mx-auto pt-16 px-4 pb-20 fade-in">
-        <!-- DEV FIX BANNER (Temporary for Testing) -->
-        <div id="dev-fix-banner" class="hidden mb-4 p-4 bg-indigo-900/40 border border-indigo-500 rounded-2xl">
-            <p class="text-[10px] font-bold text-indigo-300 uppercase mb-2">System Developer Tool</p>
-            <p class="text-xs text-indigo-100 mb-3">Your record is missing history for loan eligibility. Click below to simulate 6 months of savings.</p>
-            <button onclick="seedJumaHistory()" id="seed-btn" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all">
-                Fix My Eligibility (Seed History)
-            </button>
-        </div>
-
         <!-- SWIPABLE CARDS -->
         <div
             class="cards-container hide-scrollbar flex flex-nowrap gap-4 mb-4 snap-x snap-mandatory overflow-x-auto px-1 w-full">
@@ -1198,47 +1189,6 @@
             if (data) {
                 userProfile = data;
                 updateUI(); // Updates the HTML elements with new numbers
-                
-                // Show Dev Fix Banner for Juma
-                if (user.email === 'juma56@gmail.com') {
-                    document.getElementById('dev-fix-banner').classList.remove('hidden');
-                }
-            }
-        }
-
-        async function seedJumaHistory() {
-            const btn = document.getElementById('seed-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="ri-loader-4-line animate-spin"></i> Seeding...';
-
-            const transactions = [];
-            for (let i = 1; i <= 6; i++) {
-                const date = new Date();
-                date.setMonth(date.getMonth() - i);
-                transactions.push({
-                    user_id: user.id,
-                    amount: 1000,
-                    type: 'deposit',
-                    status: 'completed',
-                    mpesa_code: 'SEED_M' + i,
-                    created_at: date.toISOString()
-                });
-            }
-
-            try {
-                const { error } = await client.from('transactions').insert(transactions);
-                if (error) throw error;
-                
-                // Also ensures savings balance is at least 6000 for these deposits
-                const newBal = (userProfile.savings_balance || 0) + 6000;
-                await client.from('profiles').update({ savings_balance: newBal }).eq('id', user.id);
-
-                alert("✅ Record Fixed! You are now eligible for loans.");
-                location.reload();
-            } catch (err) {
-                alert("Error seeding: " + err.message);
-                btn.disabled = false;
-                btn.innerText = "Fix My Eligibility (Retry)";
             }
         }
 
