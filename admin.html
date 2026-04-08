@@ -650,9 +650,9 @@
 
     <!-- KYC modal (moved into DOM so JS can find it) -->
     <div id="kyc-modal"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
         <div
-            class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh] cultural-bg-modal">
+            class="bg-gray-900 w-full max-w-2xl rounded-[2rem] shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col max-h-[90vh] border border-gray-800">
             <div id="kyc-content" class="flex-1 overflow-y-auto p-0">Loading...</div>
         </div>
     </div>
@@ -1166,7 +1166,12 @@
 
         async function loadKYC(userId) {
             const container = document.getElementById('kyc-content');
-            container.innerHTML = '<div class="p-10 text-center"><i class="ri-loader-4-line animate-spin text-4xl text-indigo-500"></i><p class="mt-2 text-gray-500 font-medium">Fetching Member Profile...</p></div>';
+            container.innerHTML = `
+                <div class="p-20 text-center flex flex-col items-center justify-center space-y-4">
+                    <div class="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin"></div>
+                    <p class="text-gray-400 font-bold tracking-widest text-xs uppercase animate-pulse">Accessing Member Vault...</p>
+                </div>
+            `;
 
             try {
                 const { data: profile } = await client.from('profiles').select('*').eq('id', userId).single();
@@ -1175,106 +1180,169 @@
                 if (!profile) throw new Error("Profile not found");
 
                 const name = profile?.full_name || profile?.first_name || 'No name';
-                const avatar = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=200`;
+                const avatar = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=7c3aed&color=fff&size=200`;
                 const joined = new Date(profile.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
                 // Location string
                 const loc = [profile.ward, profile.sub_county, profile.county, profile.country].filter(Boolean).join(', ');
 
+                // Status configuration
+                const status = profile.membership_status || 'pending';
+                const statusColors = {
+                    approved: 'text-green-400 bg-green-500/10 border-green-500/30',
+                    pending: 'text-orange-400 bg-orange-500/10 border-orange-500/30',
+                    suspended: 'text-red-400 bg-red-500/10 border-red-500/30',
+                    rejected: 'text-red-400 bg-red-500/10 border-red-500/30'
+                };
+                const statusClass = statusColors[status] || statusColors.pending;
+
                 // Suspend Button Logic
-                const isSuspended = profile.membership_status === 'suspended' || profile.membership_status === 'rejected';
-                const suspendLabel = isSuspended ? 'Activate' : 'Suspend';
-                const suspendColor = isSuspended ? 'bg-green-50 hover:bg-green-100 text-green-600' : 'bg-red-50 hover:bg-red-100 text-red-600';
-                const suspendIcon = isSuspended ? 'ri-check-double-line' : 'ri-prohibited-line';
+                const isSuspended = status === 'suspended' || status === 'rejected';
+                const suspendLabel = isSuspended ? 'Activate Member' : 'Suspend Member';
+                const suspendColor = isSuspended ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/40' : 'bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border border-red-600/30';
+                const suspendIcon = isSuspended ? 'ri-user-follow-line' : 'ri-user-forbid-line';
 
                 let html = `
-                    <div class="relative bg-gray-50">
-                        <!-- Download Button -->
-                        <button onclick="downloadKYCPDF('${userId}')" class="absolute top-4 left-4 z-10 bg-white/80 hover:bg-blue-50 text-gray-500 hover:text-blue-600 p-2 rounded-full shadow-sm transition-colors backdrop-blur-sm" title="Download PDF">
-                            <i class="ri-download-cloud-2-line text-2xl"></i>
-                        </button>
+                    <div class="relative bg-gray-900 text-gray-100 flex flex-col min-h-full">
+                        <!-- Top Navigation / Controls -->
+                        <div class="absolute top-6 left-6 right-6 z-20 flex justify-between items-center">
+                            <button onclick="downloadKYCPDF('${userId}')" class="bg-gray-800/80 hover:bg-purple-600 text-gray-300 hover:text-white p-2.5 rounded-xl border border-gray-700 transition-all shadow-lg backdrop-blur-md" title="Export Dossier">
+                                <i class="ri-file-pdf-2-line text-xl"></i>
+                            </button>
+                            <button onclick="closeKYC()" class="bg-gray-800/80 hover:bg-red-600 text-gray-300 hover:text-white p-2.5 rounded-xl border border-gray-700 transition-all shadow-lg backdrop-blur-md">
+                                <i class="ri-close-line text-xl"></i>
+                            </button>
+                        </div>
 
-                        <!-- Close Button -->
-                        <button onclick="closeKYC()" class="absolute top-4 right-4 z-10 bg-white/80 hover:bg-red-50 text-gray-500 hover:text-red-500 p-2 rounded-full shadow-sm transition-colors backdrop-blur-sm">
-                            <i class="ri-close-line text-2xl"></i>
-                        </button>
-                        
-                        <!-- Header Profile -->
-                        <div class="flex flex-col items-center pt-10 pb-8 bg-white border-b border-gray-100">
-                            <div class="relative">
-                                <img src="${avatar}" class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-xl">
-                                <div class="absolute bottom-1 right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white"></div>
-                            </div>
-                            <h2 class="text-2xl font-bold text-gray-900 mt-4">${name}</h2>
-                            <div class="flex items-center gap-2 mt-1">
-                                <span class="bg-indigo-100 text-indigo-700 px-3 py-0.5 rounded-full text-xs font-bold tracking-wide border border-indigo-200">${profile.member_number || 'PENDING'}</span>
-                                <span class="text-gray-400 text-xs">â€¢</span>
-                                <span class="text-gray-500 text-sm">${profile.phone || 'No Phone'}</span>
+                        <!-- Header Splash -->
+                        <div class="relative pt-16 pb-10 px-8 flex flex-col items-center border-b border-gray-800 bg-gradient-to-b from-purple-900/10 to-transparent">
+                            <div class="relative group">
+                                <div class="absolute -inset-1 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                                <img src="${avatar}" class="relative w-32 h-32 rounded-full object-cover border-4 border-gray-900 shadow-2xl">
+                                <div class="absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-gray-900 ${status === 'approved' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' : 'bg-orange-500'}"></div>
                             </div>
                             
-                            <div class="flex gap-3 mt-6">
-                                <button onclick="loadEditMember('${userId}')" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors shadow-sm">
-                                    <i class="ri-edit-line"></i> Edit Details
+                            <h2 class="text-3xl font-black mt-6 tracking-tight text-white">${name}</h2>
+                            
+                            <div class="flex items-center gap-3 mt-3">
+                                <span class="bg-purple-600 text-white text-[10px] font-black px-2.5 py-1 rounded-lg tracking-widest border border-purple-400/30 shadow-lg shadow-purple-900/20">${profile.member_number || 'UNASSIGNED'}</span>
+                                <span class="w-1.5 h-1.5 rounded-full bg-gray-700"></span>
+                                <span class="text-gray-400 font-medium text-sm flex items-center gap-1"><i class="ri-phone-line text-purple-500"></i> ${profile.phone || 'No Contact'}</span>
+                            </div>
+
+                            <div class="flex flex-wrap justify-center gap-3 mt-8">
+                                <button onclick="loadEditMember('${userId}')" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl">
+                                    <i class="ri-edit-box-line text-purple-400"></i> Edit Profile
                                 </button>
-                                <button onclick="suspendMember('${userId}', '${profile.membership_status}')" class="px-4 py-2 ${suspendColor} border border-transparent rounded-lg text-xs font-bold flex items-center gap-2 transition-colors shadow-sm">
+                                <button onclick="suspendMember('${userId}', '${status}')" class="px-5 py-2.5 ${suspendColor} rounded-xl text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl">
                                     <i class="${suspendIcon}"></i> ${suspendLabel}
                                 </button>
-                                ${profile.email ? `<a href="mailto:${profile.email}" class="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-xs font-bold flex items-center gap-2 transition-colors shadow-sm">
-                                    <i class="ri-mail-send-line"></i> Email
+                                ${profile.email ? `
+                                <a href="mailto:${profile.email}" class="px-5 py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-xl">
+                                    <i class="ri-mail-send-line text-purple-400"></i> Send Email
                                 </a>` : ''}
                             </div>
                         </div>
 
-                        <div class="p-8 space-y-8">
-                            <!-- Details Grid -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div class="space-y-4">
-                                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 pb-2">Personal Information</h3>
-                                    <div class="space-y-3 text-sm">
-                                        <div class="flex justify-between"><span class="text-gray-500">National ID</span> <span class="font-semibold text-gray-900">${profile.id_number || 'N/A'}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Email</span> <a href="${profile.email ? 'mailto:' + profile.email : '#'}" class="font-semibold ${profile.email ? 'text-indigo-600 hover:underline' : 'text-gray-900'}">${profile.email || 'N/A'}</a></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Joined Date</span> <span class="font-semibold text-gray-900">${joined}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Location</span> <span class="font-semibold text-gray-900 text-right max-w-[60%]">${loc || 'N/A'}</span></div>
+                        <!-- Content Body -->
+                        <div class="p-8 space-y-10">
+                            <!-- Information Cards -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Personal Info Card -->
+                                <div class="bg-gray-800/40 border border-gray-800 p-6 rounded-3xl space-y-5">
+                                    <h4 class="text-[10px] font-black text-purple-500 uppercase tracking-widest flex items-center gap-2">
+                                        <i class="ri-fingerprint-line text-lg"></i> Personal Dossier
+                                    </h4>
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-center group">
+                                            <span class="text-xs text-gray-500 font-bold group-hover:text-gray-400 transition-colors">National Identity</span>
+                                            <span class="text-sm font-bold text-gray-200">${profile.id_number || 'NOT RECORDED'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center group">
+                                            <span class="text-xs text-gray-500 font-bold group-hover:text-gray-400 transition-colors">Digital Mail</span>
+                                            <span class="text-sm font-bold ${profile.email ? 'text-purple-400' : 'text-gray-200'}">${profile.email || 'N/A'}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center group">
+                                            <span class="text-xs text-gray-500 font-bold group-hover:text-gray-400 transition-colors">Onboarding Date</span>
+                                            <span class="text-sm font-bold text-gray-200">${joined}</span>
+                                        </div>
+                                        <div class="flex justify-between items-start group">
+                                            <span class="text-xs text-gray-500 font-bold group-hover:text-gray-400 transition-colors">Registered Locale</span>
+                                            <span class="text-sm font-bold text-gray-200 text-right max-w-[60%] leading-tight">${loc || 'GLOBAL'}</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="space-y-4">
-                                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 pb-2">Financial Status</h3>
-                                    <div class="space-y-3 text-sm">
-                                        <div class="flex justify-between"><span class="text-gray-500">Savings Balance</span> <span class="font-bold text-green-600">KES ${(profile.savings_balance || 0).toLocaleString()}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Share Capital</span> <span class="font-bold text-purple-600">KES ${(profile.share_capital || 0).toLocaleString()}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Locked Guarantees</span> <span class="font-bold text-orange-600">KES ${(profile.locked_guarantee_amount || 0).toLocaleString()}</span></div>
-                                        <div class="flex justify-between"><span class="text-gray-500">Membership</span> <span class="font-bold ${profile.membership_status === 'approved' ? 'text-green-600' : 'text-yellow-600'} uppercase text-xs bg-gray-100 px-2 py-0.5 rounded">${profile.membership_status}</span></div>
+                                <!-- Financial Status Card -->
+                                <div class="bg-gray-800/40 border border-gray-800 p-6 rounded-3xl space-y-5">
+                                    <h4 class="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                                        <i class="ri-safe-2-line text-lg text-emerald-500"></i> Capital Holdings
+                                    </h4>
+                                    <div class="space-y-4">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500 font-bold">Liquid Savings</span>
+                                            <span class="text-lg font-black text-green-400">KES ${(profile.savings_balance || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500 font-bold">Share Capital</span>
+                                            <span class="text-sm font-black text-purple-400">KES ${(profile.share_capital || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500 font-bold">Locked Exposure</span>
+                                            <span class="text-sm font-black text-orange-400">KES ${(profile.locked_guarantee_amount || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-xs text-gray-500 font-bold">Member Standing</span>
+                                            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-md border ${statusClass}">${status}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Documents Section -->
-                            <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-200 pb-2 mb-4">KYC Documents (${docs ? docs.length : 0})</h3>
+                            <!-- Document Evidence -->
+                            <div class="space-y-6">
+                                <div class="flex justify-between items-end border-b border-gray-800 pb-2">
+                                    <h4 class="text-[10px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-2">
+                                        <i class="ri-shield-user-line text-lg"></i> KYC Evidence Archive
+                                    </h4>
+                                    <span class="text-[10px] font-black text-gray-600 uppercase">${docs ? docs.length : 0} Files Recorded</span>
+                                </div>
+                                
                                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
                                 ${docs && docs.length > 0 ? docs.map(d => `
-                                    <div class="group relative bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all">
-                                        <div class="aspect-video bg-gray-100 w-full overflow-hidden relative">
+                                    <div class="group relative bg-gray-800/50 rounded-2xl border border-gray-800 overflow-hidden hover:border-purple-500/50 transition-all">
+                                        <div class="aspect-video bg-gray-950 w-full overflow-hidden relative">
                                             ${d.url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
-                        ? `<img src="${d.url}" class="w-full h-full object-cover cursor-pointer transition-transform group-hover:scale-105" onclick="window.open('${d.url}', '_blank')">`
-                        : `<div class="w-full h-full flex items-center justify-center text-gray-400"><i class="ri-file-text-line text-4xl"></i></div>`
-                    }
-                                            <a href="${d.url}" target="_blank" class="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><i class="ri-external-link-line"></i></a>
-                                        </div>
-                                        <div class="p-3">
-                                            <p class="text-xs font-bold text-gray-800 truncate" title="${d.type}">${d.type}</p>
-                                            <p class="text-[10px] text-gray-500 truncate mb-2">${new Date(d.created_at).toLocaleDateString()}</p>
-                                            <div class="flex justify-between items-center">
-                                                <button onclick="verifyDocument('${d.id}', ${!d.verified})" class="w-full text-[10px] py-1.5 rounded font-bold transition-colors ${d.verified ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}">
-                                                    ${d.verified ? '<i class="ri-checkbox-circle-line"></i> Verified' : 'Verify Document'}
-                                                </button>
+                                                ? `<img src="${d.url}" class="w-full h-full object-cover cursor-pointer transition-transform group-hover:scale-110" onclick="window.open('${d.url}', '_blank')">`
+                                                : `<div class="w-full h-full flex items-center justify-center text-gray-600"><i class="ri-file-text-line text-4xl"></i></div>`
+                                            }
+                                            <div class="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                                                <button onclick="window.open('${d.url}', '_blank')" class="text-[10px] font-bold text-white flex items-center gap-1"><i class="ri-zoom-in-line"></i> View Detail</button>
                                             </div>
                                         </div>
+                                        <div class="p-3 space-y-2">
+                                            <div>
+                                                <p class="text-[10px] font-black text-gray-200 truncate uppercase tracking-tighter" title="${d.type}">${d.type}</p>
+                                                <p class="text-[9px] text-gray-600 font-bold uppercase tracking-widest">${new Date(d.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <button onclick="verifyDocument('${d.id}', ${!d.verified})" class="w-full text-[9px] py-1.5 rounded-lg font-black uppercase transition-all shadow-inner ${d.verified ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-purple-600 text-white hover:bg-purple-500 active:scale-95'}">
+                                                ${d.verified ? '<i class="ri-checkbox-circle-fill"></i> Verified' : 'Verify File'}
+                                            </button>
+                                        </div>
                                     </div>
-                                `).join('') : `<div class="col-span-full text-center py-8 text-gray-400 italic bg-gray-50 rounded-xl border border-dashed border-gray-200">No documents uploaded yet.</div>`}
+                                `).join('') : `
+                                    <div class="col-span-full py-12 flex flex-col items-center justify-center text-gray-600 border-2 border-dashed border-gray-800 rounded-3xl bg-gray-800/20">
+                                        <i class="ri-ghost-line text-5xl mb-3 opacity-20"></i>
+                                        <p class="text-xs font-bold uppercase tracking-widest opacity-40">No identity documents detected</p>
+                                    </div>
+                                `}
                                 </div>
                             </div>
+                        </div>
+                        
+                        <!-- Footer Security Note -->
+                        <div class="mt-auto p-6 text-center border-t border-gray-800 bg-gray-950/50">
+                            <p class="text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em]">End-to-End Encrypted Member Session <i class="ri-lock-2-fill text-purple-900"></i></p>
                         </div>
                     </div>
                 `;
@@ -1282,7 +1350,14 @@
                 container.innerHTML = html;
             } catch (err) {
                 console.error(err);
-                container.innerHTML = `<div class="p-10 text-center text-red-500"><i class="ri-error-warning-line text-4xl mb-2"></i><br>Error loading profile: ${err.message}</div>`;
+                container.innerHTML = `
+                    <div class="p-20 text-center flex flex-col items-center justify-center text-red-400 space-y-4">
+                        <i class="ri-alarm-warning-line text-6xl opacity-40"></i>
+                        <p class="font-black text-sm uppercase tracking-widest">Profile Access Denied</p>
+                        <p class="text-xs text-red-500/60 font-bold max-w-xs">${err.message}</p>
+                        <button onclick="closeKYC()" class="px-6 py-2 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black uppercase text-red-400">Abort Protocol</button>
+                    </div>
+                `;
             }
         }
 
