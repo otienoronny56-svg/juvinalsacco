@@ -1687,7 +1687,7 @@
             const data = currentMemberView === 'active' ? membersCache.active : membersCache.pending;
 
             if (currentMemberView === 'active') {
-                thead.innerHTML = `<tr><th class="px-6 py-4">Member</th><th class="px-6 py-4">Member No</th><th class="px-6 py-4">Phone</th><th class="px-6 py-4">Email</th><th class="px-6 py-4 text-right">Savings</th><th class="px-6 py-4 text-right">Shares</th><th class="px-6 py-4 text-right">Status</th><th class="px-6 py-4 text-right">Action</th></tr>`;
+                thead.innerHTML = `<tr><th class="px-6 py-4">Member No</th><th class="px-6 py-4">Member</th><th class="px-6 py-4">Phone</th><th class="px-6 py-4">Email</th><th class="px-6 py-4 text-right">Savings</th><th class="px-6 py-4 text-right">Shares</th><th class="px-6 py-4 text-right">Status</th><th class="px-6 py-4 text-right">Action</th></tr>`;
             } else {
                 thead.innerHTML = `<tr><th class="px-6 py-4">New User</th><th class="px-6 py-4">Phone</th><th class="px-6 py-4">Email</th><th class="px-6 py-4">M-Pesa Ref</th><th class="px-6 py-4">Date Joined</th><th class="px-6 py-4 text-right">Actions</th></tr>`;
             }
@@ -1709,8 +1709,8 @@
                     const statusColor = m.membership_status === 'approved' ? 'text-green-400' : 'text-red-400';
                     return `
                         <tr class="hover:bg-gray-800/50 border-b border-gray-700 transition-colors">
-                            <td class="px-6 py-4 flex items-center gap-3"><img src="${avatar}" class="w-8 h-8 rounded-full border border-gray-600"><span class="font-bold text-gray-200">${name}</span></td>
                             <td class="px-6 py-4"><span class="bg-indigo-900/50 text-indigo-300 px-2 py-1 rounded text-[10px] font-mono font-bold border border-indigo-700">${identity}</span></td>
+                            <td class="px-6 py-4 flex items-center gap-3"><img src="${avatar}" class="w-8 h-8 rounded-full border border-gray-600"><span class="font-bold text-gray-200">${name}</span></td>
                             <td class="px-6 py-4 text-gray-400 text-xs font-mono">${phone}</td>
                             <td class="px-6 py-4 text-gray-400 text-xs truncate max-w-[150px]">${m.email || 'N/A'}</td>
                             <td class="px-6 py-4 text-right text-green-400 font-bold">KES ${savings}</td>
